@@ -1,0 +1,98 @@
+{% extends "_post.html" %}
+{%load webdesign %}
+{%hyde
+    title: Using Thread Locals in Django 
+    created: 2010-09-26 23:25:36
+%}
+
+{% block article %}
+
+{% article %}
+<p>
+The Django docs are pretty clear on 
+<a href="http://code.djangoproject.com/wiki/CookBookThreadlocalsAndUser">
+threadlocals
+</a>
+. One good use I can think of for threadlocals is for Basecamp style subdomains. 
+</p>
+
+<p>
+This seems like a great way to use 
+<a href="http://docs.djangoproject.com/en/dev/ref/contrib/sites/">
+Django's sites framework
+</a>
+, except it requires the SITE_ID to be set in the settings. You can use a middleware that uses threadlocals to set this per request, such as the one provided by 
+<a href="http://github.com/shestera/django-multisite">
+django-multisite
+</a>
+. This is mostly a drop-in solution, but requires you to think of where your querysets are being built. 
+</p>
+
+<p>
+Let's take the following example models:
+</p>
+
+<pre class="prettyprint">
+
+<code>
+from django.db import models
+from django.contrib.sites.models import Site
+from django.contrib.sites.managers import CurrentSiteManager
+
+class Author(models.Model):
+    name = models.CharField(max_length=200)
+    active = models.BooleanField()
+    site = models.ForeignKey(Site)  
+    on_site = CurrentSiteManager()
+
+</code>
+
+</pre>
+
+<p>
+With the following form:
+</p>
+
+<pre  class="prettyprint">
+
+<code>
+from django import forms
+from models import Author
+
+class ExampleForm(forms.Form):
+    author = forms.ModelChoiceField(queryset=Author.on_site.filter(active=True))
+
+</code>
+
+</pre>
+
+<p>
+Unfortunately, this may not work. The queryset will be built using the SITE_ID that is in effect when the form class is declared, resulting in the same SITE_ID being used process-wide. 
+</p>
+
+<p>
+You can enforce the SITE_ID to be evaluated in the proper context, assuming you aren't doing anything tricky, by changing the queryset upon the form initialization. 
+</p>
+
+<pre  class="prettyprint">
+
+<code>
+class ExampleForm(forms.Form):
+    author = forms.ModelChoiceField(queryset=Author.objects)
+
+    def __init__(self, *args, **kwargs):
+        super(ExampleForm, self).__init__(*args, **kwargs)
+        self.fields["author"].queryset = Author.on_site.filter(active=True)
+
+</code>
+
+</pre>
+
+<p>
+This is just one example of how values in threadlocals may yield application errors when you aren't aware of the context the code is executed in. 
+</p>
+
+{% endarticle %}
+
+
+{% endblock %}

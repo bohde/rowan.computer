@@ -1,0 +1,67 @@
+{% extends "_post.html" %}
+{%load webdesign %}
+{%hyde
+    title: Speeding Up Mingus
+    created: 2010-03-18 3:32:29
+%}
+
+{% block article %}
+
+{% article %}
+{% excerpt %}
+Using StaticGenerator to make Mingus fast. 
+{% endexcerpt %}
+
+<p>Inspired by Cody Soyland's <a href="http://www.codysoyland.com/2010/jan/17/evaluating-django-caching-options/">excellent post on caching in Django</a>, I decided I was going to work on speeding up Mingus. </p>
+<p>In the spirit of Mingus, I decided to use a reusable Django application to achieve this. My choice was <a href="http://github.com/luckythetourist/staticgenerator">StaticGenerator</a>. </p>
+<p>With the provided middleware, generating the static pages is simple. Cleaning this up, however, isn't as easy. Mingus leverages a very modular design for building pages, making it a great candidate for template tag and view level caching. Many individual parts are cached and reused for different pages, really decreasing the number of database queries. </p>
+<p>My initial strategy was to clear the static cache of any changed pages using <a href="http://docs.djangoproject.com/en/dev/topics/signals/">Django's Signals</a>. It was simple, if a bit tedious, to set up. And it was incomplete. </p>
+<p>Consider what happens when a user visits some page that caches the list of posts in memory, right before a new post is published. If the home page is visited before the cache expires, the new post will not show up in the list of posts, but will be shown in the body of the home page. </p>
+<p>With direction from <a href="http://www.djangosnippets.org/snippets/1593/">this Django Snippet</a>, I added the ability to clear template caches on update, fixing this problem. Unfortunately, it currently requires hardcoding the template fragment names, making the cache invalidation logic dependent on the templates. I want to get rid of this, but haven't thought of an elegant way to solve this. </p>
+<p>As I was writing this post, I stumbled upon another problem. If I saved a post as a draft, then visited it, StaticGenerator would allow anyone to see it. Luckily, Jon Smelquist on github had a <a href="http://github.com/jsmelquist/staticgenerator/commit/70c7267255ac963fa3a665711dcb81f80a415078">commit</a> that added the ability to generate static pages only for anonymous users. With that and a few more checks, my own fork of StaticGenerator addresses this problem. <br />
+</p>
+<p>This is far from an optimal solution, however. One part of the Mingus home page I haven't been able to solve is the right hand popular links feed. Using full page caching without some sort of time-based clearing,  these links are going to be out of sync from page-to-page. I've chosen to drop that module for now. Also, the Requests app doesn't receive data on cached pages. I don't see this as too much of a loss, as Google Analytics reports more information for those pages. </p>
+<p>For the curious, here's a quick benchmark of the home page. I'm making no claims about this data, only publishing it. </p>
+<pre class="prettyprint">
+$ ab -n 10000 -c 100 http://joshbohde.com/
+... 
+Document Path:          /
+Document Length:        4975 bytes
+
+Concurrency Level:      100
+Time taken for tests:   1.097 seconds
+Complete requests:      10000
+Failed requests:        0
+Write errors:           0
+Total transferred:      51994488 bytes
+HTML transferred:       49869400 bytes
+Requests per second:    9118.79 [#/sec] (mean)
+Time per request:       10.966 [ms] (mean)
+Time per request:       0.110 [ms] (mean, across all concurrent requests)
+Transfer rate:          46301.44 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        2    5   0.5      5       7
+Processing:     3    6   0.9      6      10
+Waiting:        2    5   1.0      5       8
+Total:          8   11   0.8     11      13
+
+Percentage of the requests served within a certain time (ms)
+  50%     11
+  66%     11
+  75%     12
+  80%     12
+  90%     12
+  95%     12
+  98%     12
+  99%     13
+ 100%     13 (longest request)
+</pre>
+
+<p>If you're interested you can view this code <a href="http://github.com/joshbohde/django-mingus">here</a>. As always, I encourage forking and bug reports.</p>
+
+{% endarticle %}
+
+
+{% endblock %}
