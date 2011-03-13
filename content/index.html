@@ -1,19 +1,18 @@
 {% extends "skeleton/_body.html" %}
-{%hyde
-    title: "Hyde : Ready for customization"
-    created: 2009-02-01 18:09:05
-    listing: True
-%}
-
+{% block content_header %}{% endblock %}
 {% block content_body %}
-<h2>Recent Posts</h2>
-
-{%recent_posts recents 5 %}
-<ul>
-{%for post in recents %}
-<li>
-<a href='{{post.url}}'>{{post.title}}</a>
-</li>
-{%endfor%}
-</ul>
-{%endblock%}
+<section class="vcard">
+  Hi, I'm
+  <a class="fn n" href="http://joshbohde.com">
+    <span class="given-name">Josh</span>
+    <span class="family-name">Bohde</span></a>, 
+ a software developer living in 
+ <span class="adr">
+  <span class="locality">Kansas City</span>, <span class="region">MO</span>.
+ </span>
+ You can reach me via email at
+ <a class="email" href="mailto:josh.bohde@gmail.com">josh.bohde@gmail.com</a>
+ or on Twitter as
+ <a class="twitter" href="http://twitter.com/#!joshbohde">@joshbohde</a>.
+</section>
+{% endblock %}

@@ -14,7 +14,7 @@ BACKUP = False
 
 SITE_ROOT = "/"
 SITE_WWW_URL = "http://joshbohde.com"
-SITE_NAME = "Josh Bohde's Blog"
+SITE_NAME = "Josh Bohde"
 SITE_AUTHOR = "Josh Bohde"
 
 #Url Configuration
@@ -54,23 +54,28 @@ APPEND_SLASH = False
 MEDIA_PROCESSORS = {
     '*':{
         '.css':('hydeengine.media_processors.TemplateProcessor',
-                'hydeengine.media_processors.YUICompressor',),
+                'hydeengine.media_processors.CSSmin',),
         '.ccss':('hydeengine.media_processors.TemplateProcessor',
                 'hydeengine.media_processors.CleverCSS',
-                'hydeengine.media_processors.YUICompressor',),
+                'hydeengine.media_processors.CSSmin',),
         '.sass':('hydeengine.media_processors.TemplateProcessor',
                 'hydeengine.media_processors.SASS',
-                'hydeengine.media_processors.YUICompressor',),                
+                'hydeengine.media_processors.CSSmin',),                
         '.less':('hydeengine.media_processors.TemplateProcessor',
                 'hydeengine.media_processors.LessCSS',
-                'hydeengine.media_processors.YUICompressor',),                
+                'hydeengine.media_processors.CSSmin',),                
         '.hss':(
                 'hydeengine.media_processors.TemplateProcessor',
                 'hydeengine.media_processors.HSS',
-                'hydeengine.media_processors.YUICompressor',),
+                'hydeengine.media_processors.CSSmin',),
         '.js':(
                 'hydeengine.media_processors.TemplateProcessor',
-                'hydeengine.media_processors.YUICompressor',)
+                'hydeengine.media_processors.JSmin',)
+        '.coffee':(
+                'hydeengine.media_processors.TemplateProcessor',
+                'hydeengine.media_processors.CoffeeScript',
+                'hydeengine.media_processors.JSmin',)
+            )
     } 
 }
 
@@ -126,6 +131,7 @@ CLOSURE_COMPRILER = None
 #HSS_PATH = "./lib/hss-1.0-osx"
 HSS_PATH = None # if you don't want to use HSS
 
+COFFEE_PATH = "coffee"
 #Django settings
 
 TEMPLATE_DIRS = (LAYOUT_DIR, CONTENT_DIR, TMP_DIR, MEDIA_DIR)

@@ -1,10 +1,9 @@
 {% extends "skeleton/_body.html"%}
 {% block content_header %}{% endblock %}
 {% block content_body %}
-<div class="page-listing">
+<ul class="listings">
 {% for node in page.node.walk %}
 {% include "skeleton/_innerlisting.html" %}
 {% endfor %}
-</div>
-<div class="clear"></div>
+</ul>
 {% endblock %}

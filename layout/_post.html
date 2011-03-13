@@ -1,6 +1,6 @@
 {% extends "skeleton/_body.html" %}
 {% block content_body %}
-<div id="post-content">
+<section id="post-content">
 {% filter typogrify %}
 {% markdown %}
 
@@ -21,15 +21,14 @@
     
 {% endmarkdown %}
 {% endfilter %}
-</div>
+</section>
 {% endblock %}
 
 {% block content_header %}
-<div id="content-header">
-    <h1>{{ page.title }}</h1>
-    <span class="post-date">{{ page.created|date:"D d M Y"}}</span>
-</div>
-{% endblock %}
-{% block context_nav %}
-{% include "skeleton/_context_nav.html" %}
+<header>
+  <h1>{{ page.title }}</h1>
+  <time datetime="{{ page.created|date:'Y-m-d\TH:i:s' }}">
+    {{ page.created|date:"d M Y"}}
+  </time>
+</header>
 {% endblock %}
