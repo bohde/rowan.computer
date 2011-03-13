@@ -1,5 +1,6 @@
 {% extends "_post.html" %}
 {%load webdesign %}
+{% load aym %}
 {%hyde
     title: Using Thread Locals in Django 
     created: 2010-09-26 23:25:36
@@ -32,9 +33,7 @@ django-multisite
 Let's take the following example models:
 </p>
 
-<pre class="prettyprint">
-
-<code>
+{% syntax python %}
 from django.db import models
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
@@ -44,27 +43,20 @@ class Author(models.Model):
     active = models.BooleanField()
     site = models.ForeignKey(Site)  
     on_site = CurrentSiteManager()
-
-</code>
-
-</pre>
+{% endsyntax %}
 
 <p>
 With the following form:
 </p>
 
-<pre  class="prettyprint">
-
-<code>
+{% syntax python %}
 from django import forms
 from models import Author
 
 class ExampleForm(forms.Form):
     author = forms.ModelChoiceField(queryset=Author.on_site.filter(active=True))
 
-</code>
-
-</pre>
+{% endsyntax %}
 
 <p>
 Unfortunately, this may not work. The queryset will be built using the SITE_ID that is in effect when the form class is declared, resulting in the same SITE_ID being used process-wide. 
@@ -74,19 +66,14 @@ Unfortunately, this may not work. The queryset will be built using the SITE_ID t
 You can enforce the SITE_ID to be evaluated in the proper context, assuming you aren't doing anything tricky, by changing the queryset upon the form initialization. 
 </p>
 
-<pre  class="prettyprint">
-
-<code>
+{% syntax python %}
 class ExampleForm(forms.Form):
     author = forms.ModelChoiceField(queryset=Author.objects)
 
     def __init__(self, *args, **kwargs):
         super(ExampleForm, self).__init__(*args, **kwargs)
         self.fields["author"].queryset = Author.on_site.filter(active=True)
-
-</code>
-
-</pre>
+{% endsyntax %}
 
 <p>
 This is just one example of how values in threadlocals may yield application errors when you aren't aware of the context the code is executed in. 

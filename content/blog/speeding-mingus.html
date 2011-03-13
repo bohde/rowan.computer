@@ -1,5 +1,7 @@
 {% extends "_post.html" %}
 {%load webdesign %}
+{% load aym %}
+
 {%hyde
     title: Speeding Up Mingus
     created: 2010-03-18 3:32:29
@@ -8,9 +10,6 @@
 {% block article %}
 
 {% article %}
-{% excerpt %}
-Using StaticGenerator to make Mingus fast. 
-{% endexcerpt %}
 
 <p>Inspired by Cody Soyland's <a href="http://www.codysoyland.com/2010/jan/17/evaluating-django-caching-options/">excellent post on caching in Django</a>, I decided I was going to work on speeding up Mingus. </p>
 <p>In the spirit of Mingus, I decided to use a reusable Django application to achieve this. My choice was <a href="http://github.com/luckythetourist/staticgenerator">StaticGenerator</a>. </p>
@@ -22,7 +21,8 @@ Using StaticGenerator to make Mingus fast.
 </p>
 <p>This is far from an optimal solution, however. One part of the Mingus home page I haven't been able to solve is the right hand popular links feed. Using full page caching without some sort of time-based clearing,  these links are going to be out of sync from page-to-page. I've chosen to drop that module for now. Also, the Requests app doesn't receive data on cached pages. I don't see this as too much of a loss, as Google Analytics reports more information for those pages. </p>
 <p>For the curious, here's a quick benchmark of the home page. I'm making no claims about this data, only publishing it. </p>
-<pre class="prettyprint">
+
+{% syntax bash %}
 $ ab -n 10000 -c 100 http://joshbohde.com/
 ... 
 Document Path:          /
@@ -57,7 +57,7 @@ Percentage of the requests served within a certain time (ms)
   98%     12
   99%     13
  100%     13 (longest request)
-</pre>
+{% endsyntax %}
 
 <p>If you're interested you can view this code <a href="http://github.com/joshbohde/django-mingus">here</a>. As always, I encourage forking and bug reports.</p>
 

@@ -59,9 +59,23 @@ article {
   clear: both;
   font-size: 1em;
 
+  header {
+    margin-bottom: 1em;
+  }
+
   h1 {
+    @include inline-block;
     font-size: 4.2308em; 
+    margin: none;
+    margin-right: .25em;
   } 
+
+  .published {
+    vertical-align: text-bottom;
+    font-size: 1.6154em;
+    line-height: .619em;
+  }
+
   a { 
     text-decoration: none;
     border-bottom: 1px dotted; 
@@ -95,5 +109,12 @@ article {
       @include float-right;
     }
   } 
+}
+
+
+.syntax pre{
+  background-color: #fff;
+  border: 1px solid;
+  padding: 1em;
 }
 

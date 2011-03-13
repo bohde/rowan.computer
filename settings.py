@@ -136,6 +136,10 @@ COMPASS_PATH = "/usr/bin/compass"
 
 TEMPLATE_DIRS = (LAYOUT_DIR, CONTENT_DIR, TMP_DIR, MEDIA_DIR)
 
+PYGMENTS_OPTIONS = {
+    "cssclass": "syntax"
+}
+
 INSTALLED_APPS = (
     'hydeengine',
     'django.contrib.webdesign',

@@ -1,2 +1,3 @@
 cssmin
 jsmin
+Pygments
