@@ -9,7 +9,7 @@ html {
 body {
   @include blueprint-typography(true);
   margin: auto;
-  max-width: 70em;
+  max-width: 60em;
   padding-left: 2em;
   padding-right: 2em;
 }
