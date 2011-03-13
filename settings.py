@@ -2,6 +2,10 @@ import os
 
 ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
 
+import sys
+DJANGO_PATH = os.path.join(ROOT_PATH, "django")
+sys.path.append(DJANGO_PATH)
+
 #Directories
 LAYOUT_DIR = os.path.join(ROOT_PATH, 'layout')
 CONTENT_DIR = os.path.join(ROOT_PATH, 'content')
@@ -143,5 +147,6 @@ PYGMENTS_OPTIONS = {
 INSTALLED_APPS = (
     'hydeengine',
     'django.contrib.webdesign',
+    'verbatim',
 )
 

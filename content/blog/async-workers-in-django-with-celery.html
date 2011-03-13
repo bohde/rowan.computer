@@ -1,0 +1,31 @@
+{% extends "_post.html" %}
+{%load webdesign %}
+{% load aym %}
+
+{%hyde
+    title: Async Workers in Django with Celery
+    created: 2011-02-10 22:09:41
+%}
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+Celery, the [distributed task queue framework][1], recently introduced [asynchronous workers][2] in the 2.2 release. I found that when I tried to use the eventlet worker using Celery's Django integration, it started to hang after making some database calls, at least when using the psycopg2 database backend.
+
+I found that I could get around this by applying eventlet's monkey patch before Django starts loading. I did this by writing a separate manage.py, like the following.
+
+<script src="https://gist.github.com/821848.js?file=async_manage.py"></script> 
+
+Now I'm able to run `./async_manage.py celeryd -P eventlet -c 100`, and not have it hang on database calls.
+
+I've not tried this method with gevent, but a similar approach should work.
+
+ [1]: http://celeryproject.org/ "Celery Distributed Task Queue"
+ [2]: http://celeryq.org/docs/userguide/concurrency/eventlet.html "Concurrency with Eventlet"
+
+{% endmarkdown %}
+{% endarticle %}
+
+{% endblock %}

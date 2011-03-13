@@ -1,0 +1,229 @@
+{% extends "_post.html" %}
+{%load webdesign %}
+{% load aym %}
+{% load verbatim %}
+
+{%hyde
+    title: Backbone.js and Django
+    created: 2010-11-25 20:54:35
+%}
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+I've been using [backbone.js][1] recently, mostly with node.js, or with the localstore bundled with the example Todo application for quick prototypes. However, I wanted to integrate it within some existing Django applications, but had some trouble. 
+
+Since Backbone assumes a REST architecture, I needed some way to expose my Django models. For this, I went with [Tastypie][2], which is the easiest way I've found to write a RESTful API for your app. 
+
+I've put together a sample application using Backbone and Tastypie, viewable on [Github][3], though I'll do a quick walkthrough of the code. 
+
+Here's the models.py, which defines an overly simple tweet. 
+
+{% syntax python %}
+from django.db import models
+
+class Tweet(models.Model):
+    username = models.CharField(max_length=25)
+    message = models.CharField(max_length=140)
+    timestamp = models.DateTimeField(auto_now_add=True)
+{% endsyntax %}    
+
+Using Tastypie for our API, we setup a resource
+
+{% syntax python %}
+from tastypie.resources import ModelResource
+from tastypie.authorization import Authorization
+from tweets.models import Tweet
+
+class TweetResource(ModelResource):
+    class Meta:
+        queryset = Tweet.objects.all()
+        authorization = Authorization()
+{% endsyntax %}    
+
+Then we setup some urlpatterns to access our data. 
+
+{% syntax python %}
+from django.conf.urls.defaults import *
+from tweets.api import TweetResource
+
+tweet_resource = TweetResource()
+
+urlpatterns = patterns('',
+    (r'^$',
+     'django.views.generic.simple.direct_to_template',
+     {'template':'index.html'}),
+    (r'^api/', include(tweet_resource.urls)),
+)
+{% endsyntax %}    
+
+From here, you should be able to use curl to test out the api, like so:
+
+{% syntax bash %}
+$ curl -H 'Accept: application/json' http://localhost:8000/api/tweet/
+{"meta": {"limit": 20, "next": null, "offset": 0, "previous": null, "total_count": 0}, "objects": []}
+{% endsyntax %}
+    
+
+In the above urls, there was a direct to template view, which will be our simple app. This will load Backbone and dependencies, [ICanHaz.js][4] for templating, and define a template for displaying tweets, and the basic structure of our page.
+
+{% syntax html %}
+{% verbatim %}
+{% load verbatim %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Django + Backbone.js</title>
+
+    <link rel="stylesheet" 
+          href="http://yui.yahooapis.com/3.2.0/build/cssreset/reset-min.css">
+    <link rel="stylesheet" href="{{ MEDIA_URL }}css/style.css">
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.js"></script>
+    <script src="http://cachedcommons.org/cache/underscore/1.1.0/javascripts/underscore-min.js">
+    </script>
+    <script src="{{ MEDIA_URL }}js/ICanHaz.min.js"></script>
+    <script src="{{ MEDIA_URL }}js/backbone-min.js"></script>
+    <script>
+      TWEET_API = "{% url api_dispatch_list resource_name="tweet" %}";
+    </script>
+    <script src="{{ MEDIA_URL }}js/app.js"></script>
+
+    {% verbatim %}
+    <script type="text/html" id="tweetTemplate">
+      <a class="username">{{ username }}</a>
+      <p class="message">
+        {{ message }}
+      </p>
+      <abbr class="timestamp">{{ timestamp }}</abbr>
+    </script>
+    {% \endverbatim %}
+  </head>
+
+  <body>
+    <div id="app">
+      <div id="input">
+        <strong>What's going on?</strong>
+        <textarea id="message"></textarea>
+        <button class="tweet">Tweet</button>
+      </div>
+      <h2>Timeline</h2>
+      <ul id="tweets">
+      </ul>
+    </div>
+  </body>
+</html>
+{% endverbatim %}
+{% endsyntax %}    
+
+Notice there is a nonstandard tag, `{% verbatim %}{% verbatim %}{% endverbatim %}`, which is used to escape the Mustache templates. This tag is by ericflo, and can be found on [Github][5]. 
+
+Finally, we need to setup our application code in Javascript. First we'll change Backbone's sync function, to do a GET upon receiving a HTTP CREATED. This requires 2 requests to do a create, so you may want to use some other method in production.
+
+{% syntax javascript %}
+var oldSync = Backbone.sync;
+
+Backbone.sync = function(method, model, success, error){
+    var newSuccess = function(resp, status, xhr){
+        if(xhr.statusText === "CREATED"){
+            var location = xhr.getResponseHeader('Location');
+            return $.ajax({
+                       url: location,
+                       success: success
+                   });
+        }
+        return success(resp);
+    };
+    return oldSync(method, model, newSuccess, error);
+};
+{% endsyntax %}    
+
+Next, we'll define our Tweet model. Since we have so little logic in this application, we'll just define the url attribute so we can talk to the server. Tastypie will give the individual tweets a resource_uri attribute, but if it hasn't been persisted to the server, it should default to the collections url. We do this because a POST to the collection should add produce a new tweet. Tastypie also namespaces the resulting JSON, so we'll need to define a parse function on the collection that will return the `objects` attribute in the data returned from the server.
+
+{% syntax javascript %}
+window.Tweet = Backbone.Model.extend({
+  url: function(){
+     return this.get('resource_uri') || this.collection.url;
+  }
+});
+
+window.Tweets = Backbone.Collection.extend({
+  url: TWEET_API,
+  parse: function(data){
+      return data.objects;
+  }                                             
+});
+{% endsyntax %}    
+
+Next are the views that define our application, the first is responsible for displaying the individual tweets on the page.
+
+{% syntax javascript %}
+window.TweetView = Backbone.View.extend({
+  tagName: 'li',
+  className: 'tweet',
+
+  render: function(){
+      $(this.el).html(ich.tweetTemplate(this.model.toJSON()));
+      return this;
+  }                                        
+});
+{% endsyntax %}
+    
+
+Last, we have a top level view that handles the user interaction. It is responsible for creating the collection of tweets, loading and display them. It also listens for a click event on the button that says "Tweet", and will create a new tweet in the collection. 
+
+{% syntax javascript %}
+window.App = Backbone.View.extend({
+  el: $('#app'),
+
+  events: {
+      'click .tweet': 'createTweet'
+  },
+
+  initialize: function(){
+      _.bindAll(this, 'addOne', 'addAll', 'render');
+      this.tweets = new Tweets();
+      this.tweets.bind('add', this.addOne);
+      this.tweets.bind('refresh', this.addAll);
+      this.tweets.bind('all', this.render);
+      this.tweets.fetch();
+  },
+
+  addAll: function(){
+      this.tweets.each(this.addOne);
+  },
+
+  addOne: function(tweet){
+      var view = new TweetView({model:tweet});
+      this.$('#tweets').append(view.render().el);
+  },
+
+  createTweet: function(){
+      var tweet = this.$('#message').val();
+      if(tweet){
+          this.tweets.create({
+                                 message: tweet,
+                                 username: "Test User"
+                             });
+          this.$('#message').val('');
+      }
+  }                                  
+});
+
+window.app = new App();
+{% endsyntax %}    
+
+And with that we've got a (admittedly very) simple Twitter clone working with our Django model. Hopefully this helps you in creating applications with Django and Backbone.
+
+ [1]: http://documentcloud.github.com/backbone/
+ [2]: https://github.com/toastdriven/django-tastypie
+ [3]: https://github.com/joshbohde/django-backbone-example
+ [4]: http://icanhazjs.com/
+ [5]: https://gist.github.com/629508
+
+{% endmarkdown %}
+{% endarticle %}
+
+{% endblock %}
