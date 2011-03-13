@@ -1,18 +1,35 @@
 // Import the non-default scaffolding module to help us get started.
 @import "blueprint/scaffolding";
 
-// This configuration will only apply the
-// blueprint styles to pages with a body class of "bp"
-// This makes it easier to have pages without blueprint styles
-// when you're using a single/combined stylesheet.
+html {
+  color: #333;
+  background-color: #f8f8f8;
+}
 
 body {
   @include blueprint-typography(true);
-  @include blueprint-utilities;
-  @include blueprint-interaction;
   margin: auto;
   max-width: 70em;
   padding-left: 2em;
   padding-right: 2em;
+}
+
+body h1 {
+  color: #333;
+}
+
+body a {
+  text-decoration: none;
+  border-bottom: 1px dotted; 
+  color: #333;
+  
+  &:visited {
+    color: #555;
+  } 
+
+  &:hover {
+    background-color: #FFFCD9;
+    border-bottom: 1px solid #FFFCD9;
+  } 
 }
 

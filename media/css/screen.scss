@@ -15,10 +15,7 @@
 @import "compass/utilities/general/clearfix";
 @import "compass/utilities/general/float";
 
-html {
-  color: #333;
-  background-color: #f8f8f8;
-}
+@import "partials/pygments";
 
 header.page, 
 nav.site {
@@ -26,8 +23,8 @@ nav.site {
 }
 
 header.page a {
-  text-decoration: none;
   font-weight: bolder;
+  border: none;
   
   h1 {
     padding: .25em 0;
@@ -37,10 +34,6 @@ header.page a {
 
 footer.page {
   text-align: center;
-  a {
-    text-decoration: none;
-    border-bottom: 1px dotted;
-  }
 }
 
 nav.site {
@@ -48,11 +41,11 @@ nav.site {
 
   a { 
     @include inline-block;
+    border: none;
     background-color: #333;
     color: #f8f8f8;
     font-size: 1.6154em;
     text-transform: lowercase;
-    text-decoration: none;
     padding: .25em 1em;
     margin-bottom: .25em;
   } 
@@ -84,20 +77,6 @@ article {
     line-height: .619em;
   }
 
-  a { 
-    text-decoration: none;
-    border-bottom: 1px dotted; 
-    color: #333;
-    
-    &:visited {
-      color: #555;
-    } 
-  
-    &:hover {
-      background-color: #FFFCD9;
-      border-bottom: 1px solid #FFFCD9;
-    } 
-  }  
 } 
 
 .listings {
@@ -112,17 +91,10 @@ article {
   
     a {
       @include float-left;
-    }     
+    }
+     
     time {
       @include float-right;
     }
   } 
 }
-
-
-.syntax pre{
-  background-color: #fff;
-  border: 1px solid;
-  padding: 1em;
-}
-
