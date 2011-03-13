@@ -2,15 +2,19 @@
 {% block title %}{{site.name}} : {{page.module.name}} : {{page.title}} {% endblock %}
 {% block content %}
 {% block sitenav %}
-<nav>
+<nav class="site">
   {% for module in site.children %}
   <a  class="{% ifequal page.module module %}selected {% endifequal %} {{ module.name }}" href="{{module.listing_url}}">
     {{module.name|unslugify}}
   </a>
   {% endfor %}
+  <a class="email" href="mailto:josh.bohde@gmail.com">Email</a>
+  <a class="twitter" href="http://twitter.com/#!joshbohde">Twitter</a>
+  <a class="github" href="http://github.com/joshbohde">Github</a>
 </nav>
 {% endblock %}
 <article>
 {% block content_header %}<h1>{{ page.title }}</h1>{% endblock %}
-{% block content_body %}{% endblock %}{% endblock %}
+{% block content_body %}{% endblock %}
 </article>
+{% endblock %}

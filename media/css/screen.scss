@@ -1,0 +1,99 @@
+// This import applies a global reset to any page that imports this stylesheet.
+@import "blueprint/reset";
+
+// To configure blueprint, edit the partials/base.sass file.
+@import "partials/base";
+
+// Import all the default blueprint modules so that we can access their mixins.
+@import "blueprint";
+
+// Combine the partials into a single screen stylesheet.
+@import "partials/page";
+@import "partials/form";
+
+@import "compass/css3/inline-block";
+@import "compass/utilities/general/clearfix";
+@import "compass/utilities/general/float";
+
+html {
+  color: #333;
+  background-color: #f8f8f8;
+}
+
+header.page, 
+nav.site {
+  @include inline-block;
+}
+
+header.page a {
+  text-decoration: none;
+  font-weight: bolder;
+  
+  h1 {
+    padding: .25em 0;
+    font-size: 2.6154em;
+  } 
+}
+
+nav.site {
+  float: right;
+
+  a { 
+    @include inline-block;
+    background-color: #333;
+    color: #f8f8f8;
+    font-size: 1.6154em;
+    text-transform: lowercase;
+    text-decoration: none;
+    padding: .25em 1em;
+    margin-bottom: .25em;
+  } 
+}
+
+section.vcard {
+  font-size: 4.2308em; 
+}
+
+article {
+  margin: 2.6154em 0;
+  clear: both;
+  font-size: 1em;
+
+  h1 {
+    font-size: 4.2308em; 
+  } 
+  a { 
+    text-decoration: none;
+    border-bottom: 1px dotted; 
+    color: #333;
+    
+    &:visited {
+      color: #555;
+    } 
+  
+    &:hover {
+      background-color: #FFFCD9;
+      border-bottom: 1px solid #FFFCD9;
+    } 
+  }  
+} 
+
+.listings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  .listing {
+    @include clearfix;      
+    font-size: 2.6154em;
+    margin-bottom: .5em;
+  
+    a {
+      @include float-left;
+    }     
+    time {
+      @include float-right;
+    }
+  } 
+}
+

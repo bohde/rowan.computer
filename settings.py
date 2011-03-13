@@ -58,8 +58,8 @@ MEDIA_PROCESSORS = {
         '.ccss':('hydeengine.media_processors.TemplateProcessor',
                 'hydeengine.media_processors.CleverCSS',
                 'hydeengine.media_processors.CSSmin',),
-        '.sass':('hydeengine.media_processors.TemplateProcessor',
-                'hydeengine.media_processors.SASS',
+        '.scss':('hydeengine.media_processors.TemplateProcessor',
+                'hydeengine.media_processors.Compass',
                 'hydeengine.media_processors.CSSmin',),                
         '.less':('hydeengine.media_processors.TemplateProcessor',
                 'hydeengine.media_processors.LessCSS',
@@ -70,12 +70,11 @@ MEDIA_PROCESSORS = {
                 'hydeengine.media_processors.CSSmin',),
         '.js':(
                 'hydeengine.media_processors.TemplateProcessor',
-                'hydeengine.media_processors.JSmin',)
+                'hydeengine.media_processors.JSmin',),
         '.coffee':(
                 'hydeengine.media_processors.TemplateProcessor',
                 'hydeengine.media_processors.CoffeeScript',
-                'hydeengine.media_processors.JSmin',)
-            )
+                'hydeengine.media_processors.JSmin',),
     } 
 }
 
@@ -131,7 +130,8 @@ CLOSURE_COMPRILER = None
 #HSS_PATH = "./lib/hss-1.0-osx"
 HSS_PATH = None # if you don't want to use HSS
 
-COFFEE_PATH = "coffee"
+COFFEE_PATH = "/usr/local/bin/coffee"
+COMPASS_PATH = "/usr/bin/compass"
 #Django settings
 
 TEMPLATE_DIRS = (LAYOUT_DIR, CONTENT_DIR, TMP_DIR, MEDIA_DIR)

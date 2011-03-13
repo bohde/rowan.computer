@@ -10,13 +10,16 @@
 	{% endblock %}
 	
   {% block css %}
-	<link rel="stylesheet" href="{{site.url}}/media/css/base.css" type="text/css" media="screen" charset="utf-8">
+  <link href="{{site.url}}/media/css/screen.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="{{site.url}}/media/css/print.css" media="print" rel="stylesheet" type="text/css" />
+  <!--[if lt IE 8]>
+      <link href="{{site.url}}/media/css/ie.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <![endif]-->
 	{% block extra_css %}
   {% endblock %}
   {% endblock %}
 
   {% block js %}
-	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
   <script src="http://cachedcommons.org/cache/modernizr/1.5.0/javascripts/modernizr-min.js"></script>
 	{% block extra_js %}
   {% endblock %}
@@ -26,7 +29,16 @@
 <body>
   {% include "skeleton/_header.html" %}
 	{% block content %}{% endblock %}
+  {% block footer %}
   {% include "skeleton/_footer.html" %}
+  {% endblock %}
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+  <script src="http://cachedcommons.org/cache/jquery-timeago/0.9.0/javascripts/jquery-timeago-min.js"></script>
+  <script> 
+    $(function(){
+       $('time').timeago();
+    });
+  </script>
 </body>
 </html>
 {% endblock %}

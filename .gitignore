@@ -1,3 +1,5 @@
 *.pyc
 deploy/
 deploy_tmp/
+.sass-cache
+*.css
