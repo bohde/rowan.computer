@@ -9,29 +9,13 @@
 {% block article %}
 
 {% article %}
-<p>
+
 The Django docs are pretty clear on 
-<a href="http://code.djangoproject.com/wiki/CookBookThreadlocalsAndUser">
-threadlocals
-</a>
-. One good use I can think of for threadlocals is for Basecamp style subdomains. 
-</p>
+[threadlocals](http://code.djangoproject.com/wiki/CookBookThreadlocalsAndUser). One good use I can think of for threadlocals is for Basecamp style subdomains.
 
-<p>
-This seems like a great way to use 
-<a href="http://docs.djangoproject.com/en/dev/ref/contrib/sites/">
-Django's sites framework
-</a>
-, except it requires the SITE_ID to be set in the settings. You can use a middleware that uses threadlocals to set this per request, such as the one provided by 
-<a href="http://github.com/shestera/django-multisite">
-django-multisite
-</a>
-. This is mostly a drop-in solution, but requires you to think of where your querysets are being built. 
-</p>
+This seems like a great way to use [Django's sites framework](http://docs.djangoproject.com/en/dev/ref/contrib/sites/), except it requires the SITE_ID to be set in the settings. You can use a middleware that uses threadlocals to set this per request, such as the one provided by [django-multisite](http://github.com/shestera/django-multisite). This is mostly a drop-in solution, but requires you to think of where your querysets are being built.
 
-<p>
 Let's take the following example models:
-</p>
 
 {% syntax python %}
 from django.db import models
@@ -45,9 +29,7 @@ class Author(models.Model):
     on_site = CurrentSiteManager()
 {% endsyntax %}
 
-<p>
 With the following form:
-</p>
 
 {% syntax python %}
 from django import forms
@@ -58,13 +40,9 @@ class ExampleForm(forms.Form):
 
 {% endsyntax %}
 
-<p>
-Unfortunately, this may not work. The queryset will be built using the SITE_ID that is in effect when the form class is declared, resulting in the same SITE_ID being used process-wide. 
-</p>
+Unfortunately, this may not work. The queryset will be built using the SITE_ID that is in effect when the form class is declared, resulting in the same SITE_ID being used process-wide.
 
-<p>
-You can enforce the SITE_ID to be evaluated in the proper context, assuming you aren't doing anything tricky, by changing the queryset upon the form initialization. 
-</p>
+You can enforce the SITE_ID to be evaluated in the proper context, assuming you aren't doing anything tricky, by changing the queryset upon the form initialization.
 
 {% syntax python %}
 class ExampleForm(forms.Form):
@@ -75,9 +53,7 @@ class ExampleForm(forms.Form):
         self.fields["author"].queryset = Author.on_site.filter(active=True)
 {% endsyntax %}
 
-<p>
-This is just one example of how values in threadlocals may yield application errors when you aren't aware of the context the code is executed in. 
-</p>
+This is just one example of how values in threadlocals may yield application errors when you aren't aware of the context the code is executed in.
 
 {% endarticle %}
 
