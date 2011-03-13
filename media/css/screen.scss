@@ -35,6 +35,14 @@ header.page a {
   } 
 }
 
+footer.page {
+  text-align: center;
+  a {
+    text-decoration: none;
+    border-bottom: 1px dotted;
+  }
+}
+
 nav.site {
   float: right;
 
