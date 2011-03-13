@@ -33,3 +33,8 @@ body a {
   } 
 }
 
+body article,
+body section,
+body header {
+  display: block;
+}

@@ -38,7 +38,8 @@ footer.page {
 }
 
 nav.site {
-  float: right;
+  display: block;
+  @include float-right;
 
   a { 
     @include inline-block;
