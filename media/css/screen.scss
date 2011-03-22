@@ -87,16 +87,28 @@ article {
   padding: 0;
 
   .listing {
-    @include clearfix;      
-    font-size: 2.6154em;
     margin-bottom: .5em;
   
+    td, th {
+      vertical-align: text-bottom;
+    }
+
+    td {
+      text-align: right;
+    }
+
+    th {
+      text-align: left;
+    }
+
     a {
-      @include float-left;
+      font-size: 1.6154em;
+      border: none;
+      font-weight: normal;
     }
      
     time {
-      @include float-right;
+      font-style: italic;
     }
   } 
 }

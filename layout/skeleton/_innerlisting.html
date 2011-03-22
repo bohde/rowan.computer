@@ -4,13 +4,17 @@
     {% for list_page in node.pages %}
     {% ifnotequal list_page node.listing_page %}
     {% if list_page.display_in_list %}
-    <li class="listing">
-      <a href="{{list_page.url}}">
+    <tr class="listing">
+      <td>
+        <time datetime="{{ list_page.created|date:'Y-m-d\TH:i:s' }}">
+          {{ list_page.created|date:"Y-m-d"}}
+        </time>
+      </td>
+      <th>
+        <a href="{{list_page.url}}">
         {% with list_page.name_without_extension|remove_date_prefix|unslugify as default_title %}
         {{list_page.title|default_if_none:default_title }}{%endwith%}</a>
-      <time datetime="{{ list_page.created|date:'Y-m-d\TH:i:s' }}">
-        {{ list_page.created|date:"Y-m-d"}}
-      </time>
-    </li>{%endif%}{% endifnotequal %}{% endfor %}
+      </th>
+    </tr>{%endif%}{% endifnotequal %}{% endfor %}
 {%endspaceless%}
 {% endblock %}
