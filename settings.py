@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 import os
 
 ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
 
 import sys
 DJANGO_PATH = os.path.join(ROOT_PATH, "django")
-sys.path.append(DJANGO_PATH)
+sys.path.extend([DJANGO_PATH, ROOT_PATH])
 
 #Directories
 LAYOUT_DIR = os.path.join(ROOT_PATH, 'layout')
@@ -153,7 +154,9 @@ INSTALLED_APPS = (
     'django.contrib.webdesign',
     'verbatim',
 )
+
 try:
     from local_settings import *
 except:
     pass
+
