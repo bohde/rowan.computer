@@ -25,8 +25,8 @@
   <script> 
     BOOMR.addVar('revision', '{{ REVISION }}');
     BOOMR.init({
-      beacon_url: "http://joshbohde.com:3000/tracking.gif",
-      site_domain: "{{site.url}}", 
+      beacon_url: '{{ ANALYTICS_SERVER }}',
+      site_domain: "{{site.full_url}}", 
       BW: { enabled: false  }
       });
   </script>

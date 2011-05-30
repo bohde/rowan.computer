@@ -103,6 +103,7 @@ from gitrevision import utils
 CONTEXT = {
     'GENERATE_CLEAN_URLS': GENERATE_CLEAN_URLS,
     'REVISION': utils.GIT_REVISION,
+    'ANALYTICS_SERVER': "http://joshbohde.com:3000/tracking.gif"
 }
 
 FILTER = { 
