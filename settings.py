@@ -153,4 +153,7 @@ INSTALLED_APPS = (
     'django.contrib.webdesign',
     'verbatim',
 )
-
+try:
+    from local_settings import *
+except:
+    pass

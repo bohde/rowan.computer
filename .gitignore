@@ -2,4 +2,4 @@
 deploy/
 deploy_tmp/
 .sass-cache
-*.css
+*.css/local_settings.py
