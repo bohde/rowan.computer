@@ -98,8 +98,11 @@ SITE_POST_PROCESSORS = {
     }
 }
 
+from gitrevision import utils
+
 CONTEXT = {
-    'GENERATE_CLEAN_URLS': GENERATE_CLEAN_URLS
+    'GENERATE_CLEAN_URLS': GENERATE_CLEAN_URLS,
+    'REVISION': utils.GIT_REVISION,
 }
 
 FILTER = { 

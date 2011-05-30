@@ -2,4 +2,5 @@ cssmin
 jsmin
 Pygments
 https://github.com/joshbohde/hyde/tarball/master
+django-gitrevision
 hyde-zipper

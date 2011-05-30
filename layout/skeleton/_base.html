@@ -23,6 +23,7 @@
   <script src="http://cachedcommons.org/cache/modernizr/1.5.0/javascripts/modernizr-min.js"></script>
   <script src="{{site.url}}/media/js/boomerang.js"></script>
   <script> 
+    BOOMR.addVar('revision', '{{ REVISION }}');
     BOOMR.init({
       beacon_url: "http://joshbohde.com:3000/tracking.gif",
       site_domain: "{{site.url}}", 
