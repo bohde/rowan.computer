@@ -90,12 +90,12 @@ CONTENT_PROCESSORS = {
 }
 
 SITE_POST_PROCESSORS = {
-    # 'media/js': {
-    #        'hydeengine.site_post_processors.FolderFlattener' : {
-    #                'remove_processed_folders': True,
-    #                'pattern':"*.js"
-    #        }
-    #    }
+    '/': {
+        'zipper.site_post_processors.GzipCompress' : {
+            'filetypes': ['*html', '*.css', '*.js', '*.xml', '*.txt'],
+            'level': 9,
+        },
+    }
 }
 
 CONTEXT = {

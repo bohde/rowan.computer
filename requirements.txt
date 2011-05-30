@@ -2,3 +2,4 @@ cssmin
 jsmin
 Pygments
 https://github.com/joshbohde/hyde/tarball/master
+hyde-zipper
