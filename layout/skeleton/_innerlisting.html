@@ -6,7 +6,7 @@
     {% if list_page.display_in_list %}
     <tr class="listing">
       <td>
-        <time datetime="{{ list_page.created|date:'Y-m-d\TH:i:s' }}">
+        <time datetime="{{ list_page.created|date:'Y-m-d\TH:i:s' }}Z">
           {{ list_page.created|date:"Y-m-d"}}
         </time>
       </td>
