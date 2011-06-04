@@ -1,0 +1,79 @@
+{% extends "_post.html" %}
+{% load webdesign  %}
+{% load aym %}
+{% load verbatim %}
+
+{%hyde
+    title: Client Performance Monitoring with Boomerang and CouchDB
+    created: 2011-06-04T17:20:16Z
+%}
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+A project that that interested me awhile ago, but I only recently got around to trying was [Boomerang](http://yahoo.github.com/boomerang/doc/) from Yahoo! It's a Javascript library that  calculates the round trip time to load a page from the user's browser, using either cookies or the WebTiming API if it's available. 
+
+This project is exciting since it measures the time from when the user navigates away from the page to when the page has loaded, which could be affected by any number of things, such as latency, download speeds, or uncached static files. While there are best practices and tools to help improve client performance ([YSlow](http://developer.yahoo.com/yslow/), Chrome's built-in performance tools, [DOM Monster](http://mir.aculo.us/dom-monster/)), they aren't able to provide recommendations based upon real users' performance. 
+
+This data is can serve as an constant benchmark, which combined with the VCS data, can allow you to detect changes that result in performance regressions. This also opens up the possiblity of doing split tests on website performance. 
+
+Here are a few quick test ideas:
+
+  * Testing of competing CDN solutions with actual users. 
+  * Script loaders versus traditional script tags.
+  * Testing bundle combinations. 
+
+Round trip time isn't all that you can measure with Boomerang. It comes with bandwidth, latency, and DNS latency plugins, as well as [instructions on how to make more granular timers](http://yahoo.github.com/boomerang/doc/howtos/howto-4.html).
+
+Getting started with Boomerang is pretty easy. For this blog, I wrote a quick node.js app that translated the GET params Boomerang sends into a JSON document and uploads it to CouchDB. The code for this app is available on [Github](https://gist.github.com/1008081). I went with CouchDB because of the flexibility from it being schemaless, combined with near realtime reports from the incremental map reduce views. 
+
+First I grabbed a recent version of Boomerang from the [repo](https://github.com/yahoo/boomerang), including it in the head. Then, I added the following configuration:
+
+{% syntax javascript %}
+{% verbatim %}
+BOOMR.addVar('revision', '{{ REVISION }}');
+BOOMR.init({
+  beacon_url: '{{ ANALYTICS_SERVER }}',
+  site_domain: "{{site.full_url}}", 
+  BW: { enabled: false  }
+  });
+{% endverbatim %}
+{% endsyntax %}
+
+{% verbatim %}
+Here I'm doing a standard Boomerang setup, disabling the bandwidth test because it requires a bit more work, and adding `REVISION`, a custom [Hyde](http://ringce.com/hyde) variable, allowing me to keep track of the current git commit. 
+{% endverbatim %}
+
+Here's an example CouchDB view I'm using to monitor this blog. 
+
+Map:
+
+{% syntax javascript %}
+function(doc) {
+    var timestamp = new Date(Date.parse(doc.timestamp)),
+        time_done = parseInt(doc.t_done);
+
+    if(timestamp && time_done){
+        emit([timestamp.getFullYear(), timestamp.getMonth(), timestamp.getDate()],
+             time_done);
+    }
+}
+{% endsyntax %}
+
+Reduce: `_stats`
+
+And some example stats:
+
+{% syntax javascript %}
+{"rows":[
+    {"key":[2011,4,30],"value":{"sum":68474,"count":24,"min":146,"max":18990,"sumsqr":520080894}}
+]}
+{% endsyntax %}
+
+With this combination of tools, it's easy to generate quick reports and tests. I'm looking forward to using Boomerang for upcoming projects. 
+
+{% endmarkdown %}
+{% endarticle %}
+{% endblock %}
