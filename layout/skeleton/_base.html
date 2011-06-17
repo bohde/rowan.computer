@@ -45,7 +45,7 @@
       }
   };
   if(w.addEventListener){
-      w.addEventListener('load', callback);
+      w.addEventListener('load', callback, false);
   }else if(w.attachEvent){
       w.attachEvent('onload', callback);
   }
