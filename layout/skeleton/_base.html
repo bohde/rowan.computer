@@ -20,7 +20,7 @@
   {% endblock %}
 
   {% block js %}
-  <script src="http://ajax.cdnjs.com/ajax/libs/modernizr/1.7/modernizr-1.7.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.0.4/modernizr.min.js"></script>
 	{% block extra_js %}
   {% endblock %}
   {% endblock %}
@@ -32,7 +32,6 @@
   {% block footer %}
   {% include "skeleton/_footer.html" %}
   {% endblock %}
-  <script src="http://ajax.cdnjs.com/ajax/libs/yepnope/1.0.1/yepnope.min.js"></script>
   <script>
 (function(w){
   var callback = function(){
@@ -51,7 +50,7 @@
   }
 })(window);
 var _gaq = [['_setAccount', 'UA-9518092-1'], ['_trackPageview'], ['_trackPageLoadTime']];
-yepnope({
+Modernizr.load({
     load: {
         jquery: "//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js", 
         timeago:"http://cachedcommons.org/cache/jquery-timeago/0.9.0/javascripts/jquery-timeago-min.js",
