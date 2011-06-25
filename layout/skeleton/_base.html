@@ -34,49 +34,45 @@
   {% endblock %}
   <script>
 (function(w){
-  var callback = function(){
-      if(w.BOOMR){
-          BOOMR.page_ready();
-      }else{
-          w.BOOMR = {
-              onload: new Date()
-          };
-      }
-  };
-  if(w.addEventListener){
-      w.addEventListener('load', callback, false);
-  }else if(w.attachEvent){
-      w.attachEvent('onload', callback);
-  }
-})(window);
-var _gaq = [['_setAccount', 'UA-9518092-1'], ['_trackPageview'], ['_trackPageLoadTime']];
-Modernizr.load({
-    load: {
-        jquery: "//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js", 
-        timeago:"http://cachedcommons.org/cache/jquery-timeago/0.9.0/javascripts/jquery-timeago-min.js",
-        boomr: "{{site.url}}/media/js/boomerang.js",
-        ga: ('https:'==document.location.protocol?'https://ssl':'http://www')+'.google-analytics.com/ga.js'
-    }, 
-    callback: {
-        timeago: function(){
-            $('time').timeago();
-        },
-        boomr: function(){
-            BOOMR.addVar('revision', '{{ REVISION }}');
-            BOOMR.init({
-                beacon_url: '{{ ANALYTICS_SERVER }}',
-                site_domain: '{{ COOKIE_URL }}', 
-                BW: { enabled: false  },
-		            autorun: false
-            });
-            if(BOOMR.onload){
-                BOOMR.plugins.RT.endTimer("t_done", BOOMR.onload);
-                BOOMR.page_ready();
-            }
+    var onload = function(event){
+        if(w.addEventListener){
+            w.addEventListener('load', event, false);
+        }else if(w.attachEvent){
+            w.attachEvent('onload', event);
         }
-    }
-});
-</script>
+    };
+
+    w._gaq = [['_setAccount', 'UA-9518092-1'], ['_trackPageview'], ['_trackPageLoadTime']];
+
+    onload(function(){
+        var loaded = new Date();
+        Modernizr.load({
+            load: {
+                jquery: "//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js", 
+                timeago:"http://cachedcommons.org/cache/jquery-timeago/0.9.0/javascripts/jquery-timeago-min.js",
+                boomr: "{{site.url}}/media/js/boomerang.js",
+                ga: ('https:'==document.location.protocol?'https://ssl':'http://www')+'.google-analytics.com/ga.js'
+            }, 
+            callback: {
+                timeago: function(){
+                    $('time').timeago();
+                },
+                boomr: function(){
+                    BOOMR.addVar('revision', '{{ REVISION }}');
+                    BOOMR.init({
+                        beacon_url: '{{ ANALYTICS_SERVER }}',
+                        site_domain: '{{ COOKIE_URL }}', 
+                        BW: { enabled: false  },
+		                    autorun: false
+                    });
+                    BOOMR.plugins.RT.endTimer("t_done", loaded);
+                    BOOMR.page_ready();
+                }
+            }
+        });
+    });
+})(window);
+  </script>
 </body>
 </html>
 {% endblock %}
