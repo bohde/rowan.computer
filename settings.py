@@ -105,7 +105,8 @@ CONTEXT = {
     'GENERATE_CLEAN_URLS': GENERATE_CLEAN_URLS,
     'REVISION': utils.GIT_REVISION,
     'ANALYTICS_SERVER': "http://direct.joshbohde.com:3000/tracking.gif",
-    'COOKIE_URL': 'joshbohde.com'
+    'COOKIE_URL': 'joshbohde.com',
+    'PRODUCTION': True
 }
 
 FILTER = { 

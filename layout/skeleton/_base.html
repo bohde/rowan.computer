@@ -32,7 +32,14 @@
   {% block footer %}
   {% include "skeleton/_footer.html" %}
   {% endblock %}
-  <script>{% include "skeleton/_footer.js" %}</script>
+  <script>
+    {% if not PRODUCTION %}
+    var disqus_developer = 1;
+    {% endif %}
+    {% include "skeleton/_footer.js" %}
+  </script>
+  {% block end_body %}
+  {% endblock %}
 </body>
 </html>
 {% endblock %}

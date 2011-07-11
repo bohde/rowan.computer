@@ -16,7 +16,8 @@
                 jquery: "//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js", 
                 timeago:"http://cachedcommons.org/cache/jquery-timeago/0.9.0/javascripts/jquery-timeago-min.js",
                 boomr: "{{site.url}}/media/js/boomerang.js",
-                ga: ('https:'==document.location.protocol?'https://ssl':'http://www')+'.google-analytics.com/ga.js'
+                ga: ('https:'==document.location.protocol?'https://ssl':'http://www')+'.google-analytics.com/ga.js',
+                disqus: 'http://joshbohde.disqus.com/embed.js'
             }, 
             callback: {
                 timeago: function(){
