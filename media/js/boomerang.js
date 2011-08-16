@@ -1340,3 +1340,20 @@ BOOMR.plugins.NavigationTiming = {
 
 }(window));
 
+(function(w){
+    w._gaq = [['_setAccount', 'UA-9518092-1'], ['_trackPageview'], ['_trackPageLoadTime']];
+
+    BOOMR.addVar('revision', site.revision);
+    BOOMR.init({
+        beacon_url: site.beacon_url,
+        site_domain: site.domain, 
+        BW: { enabled: false  }
+    });
+    var load = function(url){
+        var el = document.createElement('script'); el.type = 'text/javascript'; el.async = true;
+        el.src = url;
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(el, s);
+    };
+    load(('https:'==document.location.protocol?'https://ssl':'http://www')+'.google-analytics.com/ga.js');
+    load('http://joshbohde.disqus.com/embed.js');
+})(window);
