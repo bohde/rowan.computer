@@ -30,7 +30,9 @@
         domain: '{{ COOKIE_URL }}'
     }
   </script>
-  <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.0.4/modernizr.min.js" defer="defer"></script>
+  <!--[if IE]>
+        <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.0.6/modernizr.min.js"></script>
+  <![endif]-->
 	{% block extra_js %}
   {% endblock %}
   {% endblock %}
@@ -41,7 +43,7 @@
 	{% block content %}{% endblock %}
   {% block footer %}
   {% endblock %}
-  <script src="{{site.url}}/media/js/boomerang.js" defer="defer"></script>
+  <script src="{{site.url}}/media/js/boomerang.js"></script>
   {% block end_body %}
   {% endblock %}
 </body>
