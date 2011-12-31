@@ -13,6 +13,8 @@
 {% article %}
 {% markdown %}
 
+**NOTE:** Since this post, both Backbone.js and Tastypie have gone through a lot of changes. As of December 30th, 2011, the reference repo on [Github][3] has been updated to the latest versions, and changed to use [backbone-tastypie][6], which provides an nice compatibility layer, and stays updated better than the examples in this post.
+
 I've been using [backbone.js][1] recently, mostly with node.js, or with the localstore bundled with the example Todo application for quick prototypes. However, I wanted to integrate it within some existing Django applications, but had some trouble. 
 
 Since Backbone assumes a REST architecture, I needed some way to expose my Django models. For this, I went with [Tastypie][2], which is the easiest way I've found to write a RESTful API for your app. 
@@ -222,6 +224,7 @@ And with that we've got a (admittedly very) simple Twitter clone working with ou
  [3]: https://github.com/joshbohde/django-backbone-example
  [4]: http://icanhazjs.com/
  [5]: https://gist.github.com/629508
+ [6]: https://github.com/PaulUithol/backbone-tastypie
 
 {% endmarkdown %}
 {% endarticle %}
