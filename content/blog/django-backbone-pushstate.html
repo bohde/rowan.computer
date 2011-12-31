@@ -1,0 +1,72 @@
+{% extends "_post.html" %}
+{%load webdesign %}
+{% load aym %}
+{% load verbatim %}
+
+{%hyde
+    title: Using Pushstate with Backbone.js and Django
+    created: 2011-12-30 20:54:35
+%}
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+After working on a few projects with Django and Backbone, I really wanted to replace my hash-driven apps with [pushstate][1]. [Django-pjax][2] is a library aimed at making this easier for more traditional projects, but would require me to duplicate my display logic server side, without using my current [mustache][3] templates. After a few iterations, I've settled on an approach that is DRY enough for my taste. You can view the work in my [django-backbone-example project][4]. 
+
+One way to keep the project keeps templates DRY is through a [template tag that renders mustache templates inline][5]. Combined with a client side template engine, templates can be shared between the client and server. Example usage:
+
+{% syntax html %}
+{% verbatim %}
+<div class="tweet">
+  {% mustache "path/to/my/tweetTemplate" tweet %}
+</div>
+{% endverbatim %}
+{% endsyntax %}
+
+By using [Tastypie Resources in the view][6], the same data preparation can be used for both methods. The view from the example project is as follows:
+
+{% syntax python %}
+class DetailView(TemplateView):
+    template_name = 'index.html'
+
+    def get_detail(self, pk):
+        tr = v1.canonical_resource_for('tweet')
+
+        try:
+            tweet = tr.cached_obj_get(pk=pk)
+        except Tweet.DoesNotExist:
+            raise Http404
+
+        bundle = tr.full_dehydrate(tr.build_bundle(obj=tweet))
+        data = bundle.data
+        return data
+
+    def get_context_data(self, **kwargs):
+        base = super(DetailView, self).get_context_data(**kwargs)
+        base['data'] = self.get_detail(base['params']['pk'])
+        return base
+{% endsyntax %}
+
+When adapting a client that already supports the hash-driven routing, it should just be a matter of altering the call to `Backbone.history.start()` to 
+
+{% syntax javascript %}
+Backbone.history.start({
+    silent: true,
+    pushState: true
+});
+{% endsyntax %}
+
+
+
+  [1]: https://developer.mozilla.org/en/DOM/Manipulating_the_browser_history#The_pushState().C2.A0method
+  [2]: https://github.com/jacobian/django-pjax
+  [3]: http://mustache.github.com/
+  [4]: https://github.com/joshbohde/django-backbone-example
+  [5]: https://github.com/joshbohde/django-backbone-example/blob/master/backbone_example/tweets/templatetags/mustache.py
+  [6]: http://django-tastypie.readthedocs.org/en/latest/cookbook.html#using-your-resource-in-regular-views
+
+{% endmarkdown %}
+{% endarticle %}
+{% endblock %}
