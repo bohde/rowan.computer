@@ -1,0 +1,168 @@
+{% extends "_post.html" %}
+{%load webdesign %}
+{% load aym %}
+
+{%hyde
+    title: Functional Python
+    created: 2012-02-06 14:19:35
+%}
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+It seems to me that Python as a language has a weird relationship to functional programming. Things such as the `itertools` module and the builtin `map`, `filter`, and `reduce` rely heavily a functional style, yet these approaches are often not idiomatic. 
+
+As I explore other languages, I wonder what would Python written in a functional style would look like. An evening spent hacking on it has produces some interesting results. These techniques probably shouldn't be seriously used, but this code is just for fun. 
+
+Let's examine a short imperative script
+
+{% syntax python %}
+def imperative_style(xs):
+    results = []
+    for x in xs:
+        if x >= 7: 
+            break
+        if x < 2:
+            result = 4 * x
+            results.append(result)
+    return results
+
+assert imperative_style(range(10)) == [0, 4]
+{% endsyntax %}
+
+Whenever I see code like the above `imperative_style`, I mentally file it as point of possible complexity and bugs, especially as requirements change and more logic is tacked on. 
+
+As a comparison, let's look at a simple functional version. First, we're going to need `takewhile` from itertools, which will allow us to build something like the `break` statement 
+
+After that, we have the function definition, utilizing two builtins, `map` and `filter`, as well as `takewhile` to break the problem down into logically independent parts. Notice that the conditional in the `takewhile` is inverted.
+
+{% syntax python %}
+from itertools import takewhile
+
+def functional_style(xs):
+    return map(lambda x: 4 * x,
+               filter(lambda x: x < 2,
+                      takewhile(lambda x: x < 7, xs)))
+
+assert functional_style(range(10)) == [0, 4]
+
+{% endsyntax %}
+
+There are less moving parts here, but it seems too much like a Christmas tree for me. Can we make it flatter?
+
+For this, we're going to need more tools for working with functions. First is `compose`, which let's us feed the result of one function as the argument of another. I'm always surprised that Python doesn't have this builtin. 
+In more functional languages this is a basic feature, with Haskell making it one character (`.`)
+
+{% syntax python %}
+def compose_two(g, f):
+    """Function composition for two functions, e.g. compose_two(f, g)(x) == f(g(x))"""
+    return lambda *args, **kwargs: g(f(*args, **kwargs))
+
+assert compose_two(lambda x: x * 2,
+                   lambda y: y + 4)(1) == 10
+
+def compose(*funcs):
+    """Compose an arbitrary number of functions left-to-right passed as args"""
+    return reduce(compose_two, funcs)
+{% endsyntax %}
+
+With compose, we need one more function, `partial`, which can be used to provide only some of a function's arguments. 
+
+{% syntax python %}
+from functools import partial
+composition_style = compose(
+    partial(map, lambda x: 4 * x),
+    partial(filter, lambda x: x < 2),
+    partial(takewhile, lambda x: x < 7))
+
+assert composition_style(range(10)) == [0, 4]
+{% endsyntax %}
+
+There's a quite a bit of boilerplate in this definition. Can we abstract out a reusable pattern? 
+
+{% syntax python %}
+
+from itertools import starmap
+def composed_partials(*partial_funcs):
+    return compose(*starmap(partial, partial_funcs))
+
+composed_partials_style = composed_partials(
+    (map, lambda x: 4 * x),
+    (filter, lambda x: x < 2),
+    (takewhile, lambda x: x < 7))
+
+assert composed_partials_style(range(10)) == [0, 4]
+
+{% endsyntax %}
+
+This is less noisy, but it's a bit difficult to read the logic in reverse order. Can we change that? 
+
+{% syntax python %}
+def pipe(*partial_funcs):
+    return composed_partials(*reversed(partial_funcs))
+
+pipe_style = pipe(
+    (takewhile, lambda x: x < 7),
+    (filter, lambda x: x < 2),
+    (map, lambda x: 4 * x))
+
+assert pipe_style(range(10)) == [0, 4]
+{% endsyntax %}
+
+
+This definition is more dataflow oriented, much like using pipes in a shell, or [Clojure's `->` macro](1). If you look at it just right, this definition looks a bit like a lisp with [currying](2). 
+
+
+This may be too far, but looking at the definition for composed_partials and pipe, they follow a similar structure. Can we extract that out? 
+
+{% syntax python %}
+def transform_args(func, transformer):
+    return lambda *args: func(*transformer(args))
+
+composed_partials = transform_args(compose, partial(starmap, partial))
+pipe = transform_args(composed_partials, reversed)
+
+assert composed_partials_style(range(10)) == [0, 4]
+assert pipe_style(range(10)) == [0, 4]
+{% endsyntax %}
+
+With that, our final complete version is the following:
+
+{% syntax python %}
+
+from itertools import takewhile, starmap
+from functools import partial
+
+def compose_two(g, f):
+    """Function composition for two functions, e.g. compose_two(f, g)(x) == f(g(x))"""
+    return lambda *args, **kwargs: g(f(*args, **kwargs))
+
+def compose(*funcs):
+    """Compose an arbitrary number of functions left-to-right passed as args"""
+    return reduce(compose_two, funcs)
+
+def transform_args(func, transformer):
+    return lambda *args: func(*transformer(args))
+
+composed_partials = transform_args(compose, partial(starmap, partial))
+pipe = transform_args(composed_partials, reversed)
+
+pipe_style = pipe(
+    (takewhile, lambda x: x < 7),
+    (filter, lambda x: x < 2),
+    (map, lambda x: 4 * x))
+
+{% endsyntax %}
+
+It's a bit longer than the original version, but provides small reusable parts that can be quickly assembled into larger programs. 
+
+
+ [1]: http://blog.fogus.me/2009/09/04/understanding-the-clojure-macro/
+ [2]: http://en.wikipedia.org/wiki/Currying
+
+{% endmarkdown %}
+{% endarticle %}
+
+{% endblock %}
