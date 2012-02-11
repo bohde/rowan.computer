@@ -12,7 +12,7 @@
 {% article %}
 {% markdown %}
 
-A question that comes up frequently about REST APIs is on the benefit of using an [Accept header][1] to do content negotiation instead of file extensions. Often times, benefits of the `Accept` header don't seem to outweigh the familiarity of file extensions.
+When talking about REST APIs, one of the frequent questions pertains to the benefits of using an [Accept header][1], rather than file extensions, to do content negotiation. Often, the benefits of the Accept header don’t seem to outweigh the familiarity of file extensions.
 
 ## An Example Application
 
@@ -37,11 +37,11 @@ The script to do this would have very simple logic: lookup the `issue_uri` from 
 
 Let's say that this application uses an XML API, but I'd rather use JSON. The incidental complexity associated with this change depends on how the server handles representations. If the API honors `Accept` headers, this is easy: the client changes a header. 
 
-If the API doesn't and instead relies on file extensions, things become more complex: URIs need to be parsed, the old extension replaced with the new extension, URIs need to be tested to make sure they are well-formed and work, and the data migration needs to be performed. 
+If the API doesn't honor these headers and instead relies on file extensions, things become more complex: the client developer needs to parse the URIs, replace the old extension with the new extension, test the URIs to make sure they are well-formed and functional, and perform data migration.
 
 ## Client Simplicity
 
-Allowing file extensions to determine the content type is fine, and helpful in environments that don't allow setting headers. By only allowing file extensions to determine the content type, though, the API designer forced a more complex implementation on the client developer. 
+Allowing file extensions to determine the content type is fine, and it can be helpful in environments that don't allow setting headers. By allowing only file extensions to determine the content type, though, the API designer forces a more complex implementation on the client developer. 
 
 As API designers, we often focus on designing for a specific client, when we need to focus more on allowing the client developer decide implementation details.
 
