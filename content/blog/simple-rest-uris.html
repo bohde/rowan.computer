@@ -1,0 +1,54 @@
+{% extends "_post.html" %}
+{% load webdesign %}
+{% load aym %}
+
+{%hyde
+    title: Simple REST URIs
+    created: 2012-02-11 00:55:35
+%}
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+A question that comes up frequently about REST APIs is on the benefit of using an [Accept header][1] to do content negotiation instead of file extensions. Often times, benefits of the `Accept` header don't seem to outweigh the familiarity of file extensions.
+
+## An Example Application
+
+Let's say I have a small command line application that prints out issue information from an issue tracker corresponding to a local feature branch in Git. Usage may look like so:
+
+    $ git-issue-branch some-issue
+    Found a bug
+    
+    I'm having a problem with this.
+
+I could store the information in SQLite with a schema like this:
+
+    CREATE_TABLE issue_branches (
+       id integer primary key,
+       branch text,
+       issue_uri text       
+    );
+
+The script to do this would have very simple logic: lookup the `issue_uri` from the db, do an HTTP GET, parse the response, and print the title and body of the issue. 
+
+## Transitioning the application
+
+Let's say that this application uses an XML API, but I'd rather use JSON. The incidental complexity associated with this change depends on how the server handles representations. If the API honors `Accept` headers, this is easy: the client changes a header. 
+
+If the API doesn't and instead relies on file extensions, things become more complex: URIs need to be parsed, the old extension replaced with the new extension, URIs need to be tested to make sure they are well-formed and work, and the data migration needs to be performed. 
+
+## Client Simplicity
+
+Allowing file extensions to determine the content type is fine, and helpful in environments that don't allow setting headers. By only allowing file extensions to determine the content type, though, the API designer forced a more complex implementation on the client developer. 
+
+As API designers, we often focus on designing for a specific client, when we need to focus more on allowing the client developer decide implementation details.
+
+ [1]: http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.1
+
+
+{% endmarkdown %}
+{% endarticle %}
+
+{% endblock %}
