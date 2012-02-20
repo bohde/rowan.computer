@@ -1,0 +1,82 @@
+{% extends "_post.html" %}
+{% load webdesign %}
+{% load aym %}
+
+{%hyde
+    title: Combinators in Python
+    created: 2012-02-20 18:19:35
+%}
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+Inspired by the Coffeescript library [Katy][2], I've been exploring using combinators with Python. The result can be found in my [Functional Python][3] repository. 
+
+In my [previous post][1] on Function Python, I was attempting to translate the following imperative code into different styles. 
+
+{% syntax python %}
+def imperative_style(xs):
+    results = []
+    for x in xs:
+        if x >= 7: 
+            break
+        if x < 2:
+            result = 4 * x
+            results.append(result)
+    return results
+
+assert imperative_style(range(10)) == [0, 4]
+{% endsyntax %}
+
+
+By using the linked `Combinators` class, we can translate that to the following: 
+
+{% syntax python %}
+from itertools import takewhile
+
+def fluent_combinator_style(xs):
+    return bw(xs).chain()\
+                 .R(takewhile, lambda x: x < 7)\
+                 .R(filter, lambda x: x < 2)\
+                 .R(map, lambda x: 4 * x)\
+                 .value()
+    
+assert fluent_combinator_style(range(10)) == [0, 4]
+{% endsyntax %}
+
+The combinator methods work by altering the form of function calls. The `R` method transforms `bw(wrapped_value).R(takewhile, lambda x: x < 7)` into the call `takewhile(lambda x: x < 7, wrapped_value)`. 
+
+What I find interesting about this style is that it allows the end user of a class to add something that looks like a method to an object. 
+
+As I experimented using this class wrapping iterables, it began to remind me of [Underscore.js][4]. This resulted in a tiny (69 line) iterable wrapper [`It`][5]. Using `It`, we can redefine the above like so:
+
+{% syntax python %}
+from itertools import takewhile
+
+def it_style(xs):
+    return It(xs).chain()\
+                 .R(takewhile, lambda x: x < 7)\
+                 .filter(lambda x: x < 2)\
+                 .map(lambda x: 4 * x)\
+                 .value()
+
+assert it_style(range(10)) == [0, 4]
+{% endsyntax %}
+
+Notice how `It` doesn't support `takewhile` out of the box, but the user can easily add it to the method chain. It provides flexibility on the level of the object instance, allowing the user to add functionality in a lightweight manner. 
+
+
+
+
+ [1]: /blog/functional-python
+ [2]: https://github.com/raganwald/Katy
+ [3]: https://github.com/joshbohde/functional_python/blob/master/combinators.py
+ [4]: http://documentcloud.github.com/underscore/
+ [5]: https://github.com/joshbohde/functional_python/blob/master/it.py
+
+{% endmarkdown %}
+{% endarticle %}
+
+{% endblock %}
