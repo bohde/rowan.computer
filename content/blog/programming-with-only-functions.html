@@ -1,0 +1,181 @@
+{% extends "_post.html" %}
+{% load webdesign %}
+{% load aym %}
+
+{%hyde
+    title: Programming With Only Functions
+    created: 2012-02-23 21:55:41
+%}
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+Python's `lambda` keyword does not get the love it deserves. It can only execute expressions, instead of statements. With this restriction, we can still make something interesting.
+
+
+## A Tiny Computation System
+
+It turns out that, in Python, all we need to implement the [lambda calculus][1] is the `lambda` keyword. 
+
+The identity functions would be: 
+
+{% syntax python %}
+identity = lambda x: x
+{% endsyntax %}
+
+## Encoding
+
+`identity` isn't very interesting, so let's do some calculations. First, we need some way to encode numbers. Let's start with `zero`. 
+
+{% syntax python %}
+zero = lambda f: identity
+{% endsyntax %}
+
+`zero` takes a function `f`, and returns the identity function. For clarity, this expands to:
+
+{% syntax python %}
+zero = lambda f: lambda x: x
+{% endsyntax %}
+
+After `zero`, we have `one`:
+
+{% syntax python %}
+one = lambda f: lambda x: f(x)
+{% endsyntax %}
+
+And then, `two`, `three`, and `four`:
+
+{% syntax python %}
+two = lambda f: lambda x: f(f(x))
+three = lambda f: lambda x: f(f(f(x)))
+four = lambda f: lambda x: f(f(f(f(x))))
+{% endsyntax %}
+
+Do you see the pattern yet? For a given number n, we can encode it as
+   
+{% syntax python %}
+n = lambda f: lambda x: f(f(f(....f(x)...)))
+{% endsyntax %}
+
+Such that there are n `f`s. This is method of encoding numbers is known as [Church encoding][2]. 
+
+
+## Decoding
+
+In order to turn an encoded number into a Python number, we need to decode it using a function of the form:
+
+{% syntax python %}
+decode = lambda num: num(f)(x)
+{% endsyntax %}
+
+We know that `decode(zero)` should be `0` and that `zero` ignores `f`. Therefore so `x` should be `0`. We also know that `f(0)` should be `1` and `f(f(0))` should be `2`, and so on. Therefore `f` should be `lambda x: x + 1`. Substituting this, we get our definition of `decode`:
+
+{% syntax python %}
+decode = lambda n: n(lambda x: x + 1)(0)
+{% endsyntax %}
+
+We can check this real quick:
+
+{% syntax python %}
+assert decode(zero) == 0
+assert decode(one) == 1
+{% endsyntax %}
+
+## Successors
+
+It would be rather tedious if we had to type out every definition of every number we needed. Is there a way we can get the successor of a number from just the definition of the number? Something like the following:
+
+{% syntax python %}
+one = succ(zero)
+{% endsyntax %}
+
+We know a number definition requires two `lambda`s, so we'll need three in order to accept the original number. Therefore our definition will look like this:
+
+{% syntax python %}
+succ = lambda n: lambda f: lambda x: ????
+{% endsyntax %}
+
+We know from the definition of `decode` that we can get the value of a number `n` by calling it it like `n(f)(x)`. In order to get the successor of `n`, we'll need one more `f`. Therefore we have:
+
+{% syntax python %}
+succ = lambda n: lambda f: lambda x: f(n(f)(x))
+{% endsyntax %}
+
+For easy testing, let's declare the following helper function:
+
+{% syntax python %}
+equals = lambda x, y: decode(x) == decode(y)
+assert equals(succ(zero), one)
+{% endsyntax %}
+
+Now we can easily define more numbers:
+
+{% syntax python %}
+two = succ(one)
+three = succ(two)
+four = succ(three)
+five = succ(four)
+six = succ(five)
+{% endsyntax %}
+
+## Addition
+
+Now let us define a function `plus` that implements addition. An example usage: 
+
+{% syntax python %}
+assert equals(plus(two)(three), five)
+{% endsyntax %}
+
+If we think about it, `succ` could have been defined as `plus(one)`. Is there a way we can include a `one` in the definition fo `succ`? 
+
+{% syntax python %}
+succ = lambda n: lambda f: lambda x: one(f)(n(f)(x))
+{% endsyntax %}
+
+For `plus`, we'd like to be able to specify numbers besides `one`, so we'll add another `lambda`: 
+
+{% syntax python %}
+plus = lambda m: lambda n: lambda f: lambda x: m(f)(n(f)(x))
+{% endsyntax %}
+
+## Multiplication
+
+When defining `plus`, we saw that if we have a a number `m`, `m(f)(x)` will add the decoded `m` to `x`. We also know that `one(f)(x)` adds `1` to `x`. Therefore, `m(one(f))(x)` should be equivalent to `m(f)(x)`. We can use this to define multiplication: 
+
+{% syntax python %}
+mult = lambda m: lambda n: lambda f: lambda x: m(n(f))(x)
+assert equals(mult(two)(three), six)
+{% endsyntax %}
+
+## Exponents
+
+We've started to combine these base functions we have in interesting ways. Since we know that `m(n(f))` in the defintion of `mult` repeats the addition of `n` a total of `m` times, and that `plus(n)` is the addition of `n`, we can rewrite `mult` to use fewer `lambda`s:
+
+{% syntax python %}
+mult = lambda m: lambda n: m(plus(n))(zero)
+{% endsyntax %}
+
+Since using multiplication to define exponents is a similar to using addition to define multiplication, we should be able to adapt this definition of `mult` for `exp`:
+
+{% syntax python %}
+exp = lambda m: lambda n: n(mult(m))(one)
+equals(exp(two)(two), four)
+{% endsyntax %}
+
+## More Encodings
+
+We aren't limited to just natural numbers when using the lambda calculus. We can encode [boolean logic][3] and [lists][4], allowing us to write programs with control flow and data structures.
+
+   [1]: http://en.wikipedia.org/wiki/Lambda_calculus
+   [2]: http://en.wikipedia.org/wiki/Church_encoding
+   [3]: http://en.wikipedia.org/wiki/Church_encoding#Church_booleans
+   [4]: http://en.wikipedia.org/wiki/Church_encoding#List_encodings
+
+
+
+{% endmarkdown %}
+{% endarticle %}
+
+{% endblock %}
