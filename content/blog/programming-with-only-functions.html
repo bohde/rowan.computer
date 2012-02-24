@@ -17,7 +17,7 @@ Python's `lambda` keyword does not get the love it deserves. It can only execute
 
 ## A Tiny Computation System
 
-It turns out that, in Python, all we need to implement the [lambda calculus][1] is the `lambda` keyword. 
+The lambda calculus is a system of computation based on mathematical functions. It is the foundation for functional languages. This contrasts to the Turing machine, which is the foundation for imperative languages. It turns out that, in Python, all we need to implement the [lambda calculus][1] is the `lambda` keyword. 
 
 The identity functions would be: 
 
@@ -27,7 +27,7 @@ identity = lambda x: x
 
 ## Encoding
 
-`identity` isn't very interesting, so let's do some calculations. First, we need some way to encode numbers. Let's start with `zero`. 
+`identity` isn't very interesting, so let's do some calculations. Since we have only functions, we need some way to encode numbers as functions. Let's start with `zero`. 
 
 {% syntax python %}
 zero = lambda f: identity
@@ -70,7 +70,7 @@ In order to turn an encoded number into a Python number, we need to decode it us
 decode = lambda num: num(f)(x)
 {% endsyntax %}
 
-We know that `decode(zero)` should be `0` and that `zero` ignores `f`. Therefore so `x` should be `0`. We also know that `f(0)` should be `1` and `f(f(0))` should be `2`, and so on. Therefore `f` should be `lambda x: x + 1`. Substituting this, we get our definition of `decode`:
+We know that `decode(zero)` should be `0` and that `zero` ignores `f`. Therefore `x` should be `0`. We also know that `f(0)` should be `1` and `f(f(0))` should be `2`, and so on. Therefore `f` should be `lambda x: x + 1`. Substituting this, we get our definition of `decode`:
 
 {% syntax python %}
 decode = lambda n: n(lambda x: x + 1)(0)
