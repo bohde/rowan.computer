@@ -1,0 +1,36 @@
+{% extends "_post.html" %}
+{%load webdesign %}
+{% load aym %}
+{% load verbatim %}
+
+{%hyde
+    title: Don't Design the API to the Client
+    created: 2012-09-17 9:17:35
+%}
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+A problem I often see with first production versions of HTTP APIs is
+they are tightly coupled to the client code. This is especially easy
+to do in web applications where both the client and server source
+are contained in the same repository. 
+
+A few signs in development you should watch out for: 
+
+  * Display changes on the client cause a change in the API
+  * API resources that are only a combination of other resources
+  * Client views and API resources have a one-to-one relationship
+
+These hint that the API may be too specialized to the client. This 
+make other clients harder to develop, and makes changing the current
+client difficult. Instead, let client development push the API to 
+develop flexibility, instead of assumptions on how it will be used.
+
+
+{% endmarkdown %}
+{% endarticle %}
+
+{% endblock %}
