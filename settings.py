@@ -99,11 +99,13 @@ SITE_POST_PROCESSORS = {
     }
 }
 
-from gitrevision import utils
+def revision():
+    from gitrevision import utils
+    return utils.GIT_REVISION
 
 CONTEXT = {
     'GENERATE_CLEAN_URLS': GENERATE_CLEAN_URLS,
-    'REVISION': utils.GIT_REVISION,
+    'REVISION': revision,
     'ANALYTICS_SERVER': "http://direct.joshbohde.com:3000/tracking.gif",
     'COOKIE_URL': 'joshbohde.com',
     'PRODUCTION': True
