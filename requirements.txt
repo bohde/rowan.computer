@@ -1,4 +1,4 @@
-CherryPy==3.2.2
+CherryPy==3.2.5
 Django==1.4
 GitPython==0.3.2.RC1
 Markdown==2.1.1
