@@ -64,6 +64,10 @@ via `ssh <your_git_host> perms <repo_name> + READERS gitweb`
 
 There is a more [advanced config for authorizing users][12], but I only care about public repos being shown.
 
+Gitweb uses cgi, so you'll need a web server to actually serve it. I
+use nginx, [with this config][14].
+
+
 For the theme, I accidently stumbled upon [gitweb-theme][10], and ran
 the [install process][11]
 
@@ -157,6 +161,7 @@ Raspberry Pi.
  [11]: https://github.com/kogakure/gitweb-theme#installation "kogakure/gitweb-theme"
  [12]: http://gitolite.com/gitolite/external.html#repo-specific-authorisation-in-gitweb "Gitolite"
  [13]: https://www.petekeen.net/hosting-private-git-repositories-with-gitolite "Private Git Repositories with Gitolite and S3"
+ [14]: https://misterpinchy.wordpress.com/2012/11/01/gitweb-and-nginx/ "Gitweb and Nginx | misterpinchy"
 {% endmarkdown %}
 {% endarticle %}
 
