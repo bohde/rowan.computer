@@ -20,7 +20,7 @@
   {% endblock %}
 
   {% block js %}
-	{% block extra_js %}
+  {% block extra_js %}
   {% endblock %}
   {% endblock %}
 
@@ -32,6 +32,21 @@
   {% endblock %}
   {% block end_body %}
   {% endblock %}
+
+{% if PRODUCTION %}
+<script>
+(function(w){
+    w._gaq = [['_setAccount', 'UA-9518092-1'], ['_trackPageview'], ['_trackPageLoadTime']];
+
+    var load = function(url){
+        var el = document.createElement('script'); el.type = 'text/javascript'; el.async = true;
+        el.src = url;
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(el, s);
+    };
+    load(('https:'==document.location.protocol?'https://ssl':'http://www')+'.google-analytics.com/ga.js');
+})(window);
+</script>
+{% endif %}
 </body>
 </html>
 {% endblock %}
