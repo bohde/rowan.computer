@@ -17,7 +17,7 @@
 
 @import "partials/pygments";
 
-header.page, 
+header.page,
 nav.site {
   @include inline-block;
 }
@@ -25,12 +25,12 @@ nav.site {
 header.page a {
   font-weight: bolder;
   border: none;
-  
+
   h1 {
     padding: .25em 0;
     font-size: 2.6154em;
     color: #555;
-  } 
+  }
 }
 
 footer.page {
@@ -41,7 +41,7 @@ nav.site {
   display: block;
   @include float-right;
 
-  a { 
+  a {
     @include inline-block;
     border: none;
     background-color: #555;
@@ -50,11 +50,11 @@ nav.site {
     text-transform: lowercase;
     padding: .25em 1em;
     margin-bottom: .25em;
-  } 
+  }
 }
 
 section.vcard {
-  font-size: 4.2308em; 
+  font-size: 4.2308em;
 }
 
 article {
@@ -67,10 +67,10 @@ article {
   }
 
   h1 {
-    font-size: 4.2308em; 
+    font-size: 4.2308em;
     margin-right: .25em;
     margin-bottom: .25em;
-  } 
+  }
 
   .published {
     vertical-align: text-bottom;
@@ -79,7 +79,7 @@ article {
     color: #555;
   }
 
-} 
+}
 
 .listings {
   list-style: none;
@@ -88,7 +88,7 @@ article {
 
   .listing {
     margin-bottom: .5em;
-  
+
     td, th {
       vertical-align: text-bottom;
     }
@@ -106,13 +106,17 @@ article {
       border: none;
       font-weight: normal;
     }
-     
+
     time {
       font-style: italic;
     }
-  } 
+  }
 }
 
 #post-content {
     font-size: 1.25em;
+}
+
+code {
+   color: #333;
 }
