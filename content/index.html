@@ -2,19 +2,21 @@
 {% block title %}{{site.name}}{% endblock %}
 {% block content_header %}{% endblock %}
 {% block content_body %}
-<section class="vcard">
+<section class="vcard h-card">
   Hi, I'm
-  <a class="fn n" href="http://joshbohde.com">
-    <span class="given-name">Josh</span>
-    <span class="family-name">Bohde</span></a>,
+  <a class="fn n p-name u-url" href="http://joshbohde.com">
+    <span class="given-name p-given-name">Josh</span>
+    <span class="family-name p-family-name">Bohde</span></a>,
  a software developer living in
- <span class="adr">
-  <span class="locality">Austin</span>, <span class="region">TX</span>.
+ <span class="adr p-adr">
+  <span class="locality p-locality">Austin</span>, <span class="region p-region">TX</span>.
  </span>
  You can reach me via email at
- <a class="email" href="mailto:josh@joshbohde.com">josh@joshbohde.com</a>
- or on Twitter as
- <a class="twitter" rel="me" href="https://twitter.com/joshbohde">@joshbohde</a>.
+ <a class="email u-email" rel="me" href="mailto:josh@joshbohde.com">josh@joshbohde.com</a>
+ , on Twitter as
+ <a class="twitter" rel="me" href="https://twitter.com/joshbohde">@joshbohde</a>
+ , or on xmpp as
+ <a class="xmpp u-impp" rel="me" href="xmpp://josh@xmpp.joshbohde.com">josh@xmpp.joshbohde.com</a>.
 </section>
 {% endblock %}
 
