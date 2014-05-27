@@ -1,0 +1,412 @@
+{% extends "_post.html" %}
+{%load webdesign %}
+{% load aym %}
+{% load verbatim %}
+
+{%hyde
+    title: Optimizing Queries with Applicatives
+    created: 2014-05-27 12:43:35
+%}
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+I was learning about [free monads](http://www.haskellforall.com/2012/06/you-could-have-invented-free-monads.html)
+recently, and how they allow separation of the generation of a program
+from the interpretation. A neat example of this is
+[Cool Idea: Free Monads for Testing Redis Calls](http://michaelxavier.net/posts/2014-04-27-Cool-Idea-Free-Monads-for-Testing-Redis-Calls.html),
+where Michael Xavier shows how to model calls to Redis, and interpret
+them different ways, allowing for better testing of code.
+
+Another benefit of modeling calls this way is that we have full access
+to data structures before execution, allowing us to optimize the
+model, eliminating redundant calls, or batching calls that allow it.
+
+
+A Key Value Store
+-----------------
+
+In case you'd like to run these examples yourself, this post is Literate Haskell.
+Copy and paste the body into a file with a `.lhs` extension, and you can run it in
+`ghci`, assuming you have `free` installed.
+
+{% syntax haskell %}
+> {-# LANGUAGE DeriveFunctor, FlexibleInstances, OverlappingInstances  #-}
+> module Main where
+> import Control.Monad (liftM2)
+> import Control.Applicative (Applicative, (<$>), (<*>), pure, liftA2)
+> import Control.Monad.Free (Free(..), iterM, liftF)
+> import Control.Monad.IO.Class (liftIO)
+> import Control.Monad.State (gets, modify)
+> import qualified Control.Monad.State as ST
+> import Data.Map (Map, intersection, union)
+> import qualified Data.Map as M
+> import Data.Maybe (isJust)
+> import Data.Monoid ((<>))
+> import Data.Set (Set)
+> import qualified Data.Set as S
+> import Data.Traversable (traverse)
+{% endsyntax %}
+
+We start with a small key value store functor, similar to the Redis one,
+but with the inclusion of a bulk get command through GetMulti.
+
+{% syntax haskell %}
+> data StoreF next = Get String (Maybe String -> next)
+>                  | GetMulti (Set String) (Map String String -> next)
+>                  | Put String String next
+>                  deriving (Functor)
+> type Store = Free StoreF
+{% endsyntax %}
+
+Then we'll need functions corresponding to our commands. We could
+use TemplateHaskell for this, but I've included them for clarity.
+
+{% syntax haskell %}
+> get :: String -> Store (Maybe String)
+> get s = liftF $ Get s id
+
+> getMulti :: Set String -> Store (Map String String)
+> getMulti s = liftF $ GetMulti s id
+
+> put :: String -> String -> Store ()
+> put k v = liftF $ Put k v ()
+{% endsyntax %}
+
+We can write a simple interpreter to run against a Map, and
+print out the operations as they occur
+
+{% syntax haskell %}
+> type MapDB = Map String String
+
+> interpret :: Store a -> MapDB -> IO a
+> interpret = ST.evalStateT . (iterM run)
+>   where
+>     run (GetMulti ids next) = do
+>       liftIO $ putStrLn $ "looking up " ++ show ids
+>       next =<< filterKeys ids <$> ST.get
+>     run (Get i next) = do
+>       liftIO $ putStrLn $ "looking up " ++ show i
+>       next =<< gets (M.lookup i)
+>     run (Put k v next) = do
+>       liftIO $ putStrLn $ "putting " ++ k ++ " " ++ v
+>       modify (M.insert k v) >> next
+{% endsyntax %}
+
+We can test the interpreter in `ghci`:
+
+{% syntax haskell %}
+λ: interpret (get "1") (M.singleton "1" "Hello World")
+looking up "1"
+Just "Hello World"
+
+λ: interpret (getMulti $ S.fromList ["1", "2"]) (M.singleton "1" "Hello World")
+looking up fromList ["1","2"]
+fromList [("1","Hello World")]
+
+λ: interpret (put "1" "Hello") M.empty
+putting 1 Hello
+{% endsyntax %}
+
+
+Now we can write a simple program to get two keys and store their
+concatenation into a third key.
+
+{% syntax haskell %}
+> program :: Store ()
+> program = do
+>   first <- get "1"
+>   second <- get "2"
+>   let val = liftM2 (++) first second
+>   case val of
+>     Just v -> put "3" v
+>     _ -> return ()
+{% endsyntax %}
+
+{% syntax haskell %}
+λ: interpret program $ M.fromList [("1", "hello "), ("2", "world!")]
+looking up "1"
+looking up "2"
+putting 3 hello world!
+{% endsyntax %}
+
+Assuming that a Get request has no side effects, there's no reason why
+we had to make two separate requests. The bulk api should let us do
+this more efficiently. We can rewrite the above to use it:
+
+{% syntax haskell %}
+> program' :: Store ()
+> program' = do
+>   m <- getMulti $ S.fromList ["1", "2"]
+>   let val = liftM2 (++) (M.lookup "1" m) (M.lookup "2" m)
+>   case val of
+>     Just v -> put "3" v
+>     _ -> return ()
+{% endsyntax %}
+
+{% syntax haskell %}
+λ: interpret program' $ M.fromList [("1", "hello "), ("2", "world!")]
+looking up fromList ["1","2"]
+putting 3 hello world!
+{% endsyntax %}
+
+That's nicer from a request count perspective, but we had to rewrite
+it to something that is less clear. If you look at the original
+implemenation of `program`, `second` doesn't depend on the value
+of `second`, so we can rewrite using `<*>` from [Applicative](http://hackage.haskell.org/package/base-4.7.0.0/docs/Control-Applicative.html#t:Applicative),
+which is less powerful than `>>=` but allows analyzing the computation
+before it happens.
+
+{% syntax haskell %}
+> program'' :: Store ()
+> program'' = do
+>   val <- liftM2 (++) <$> get "1" <*> get "2"
+>   case val of
+>     Just v -> put "3" v
+>     _ -> return ()
+{% endsyntax %}
+
+{% syntax haskell %}
+λ: interpret program'' $ M.fromList [("1", "hello "), ("2", "world!")]
+looking up "1"
+looking up "2"
+putting 3 hello world!
+{% endsyntax %}
+
+The implementation of Applicative that Free provides us doesn't know
+about our domain, so it can't optimize it, but we can provide this.
+We'll write a `<*>` that collapses mutliple Get and GetMultis into
+one single GetMulti request.
+
+I'm going to use OverlappingInstances to demonstrate, but a production
+implementation should probably write different types.
+
+First a few functions to convert receiving functions:
+
+{% syntax haskell %}
+> -- filter the map to just a set of keys
+> filterKeys :: (Ord k) => Set k -> Map k v -> Map k v
+> filterKeys is m = M.filterWithKey (\k _ -> S.member k is) m
+
+> -- filter the keys to a merged GetMulti
+> justKeys :: Set String -> (Map String String -> t) -> Map String String -> t
+> justKeys is n m = n $ filterKeys is m
+
+> -- Adapt the next from a Get to accept a Map
+> toMap :: String -> (Maybe String -> a) -> Map String String -> a
+> toMap i n m = n $ M.lookup i m
+{% endsyntax %}
+
+And some boilerplate for combining two MultiGets:
+
+{% syntax haskell %}
+> combineGet
+>  :: Set String
+>     -> (Map String String -> Store (a1 -> a))
+>     -> (Map String String -> Store a1)
+>     -> Store a
+> combineGet is f g = Free $ GetMulti is $ \m -> f m <*> g m
+{% endsyntax %}
+
+
+Using the definition of Applicative for Free, we can add in specific
+instances for that we want to collapes:
+
+{% syntax haskell %}
+> instance Applicative (Free StoreF) where
+>   pure = Pure
+>   Pure a <*> Pure b = Pure $ a b
+>   Pure f <*> Free mb = Free $ fmap f <$> mb
+>   Free (Get i next) <*> Free (Get i' next') = combineGet (S.fromList [i, i']) (toMap i next) (toMap i' next')
+>   Free (Get i next) <*> Free (GetMulti is' next') = combineGet (S.insert i is') (toMap i next) (justKeys is' next')
+>   Free (GetMulti is next) <*> Free (Get i' next') = combineGet (S.insert i' is) (justKeys is next) (toMap i' next')
+>   Free (GetMulti is next) <*> Free (GetMulti is' next') = combineGet (is' <>  is) (justKeys is next) (justKeys is' next')
+>   Free ma <*> b = Free $ (<*> b) <$> ma
+{% endsyntax %}
+
+With this definition our `program''` now makes just one GetMulti
+request:
+
+{% syntax haskell %}
+λ: interpret program'' $ M.fromList [("1", "hello "), ("2", "world!")]
+looking up fromList ["1","2"]
+putting 3 hello world!
+{% endsyntax %}
+
+Examples
+--------
+
+We can also test to makes sure that the results of GetMulti return
+an appropriate Map:
+
+{% syntax haskell %}
+> program2 :: Store (Map String String)
+> program2 = intersection <$> getMulti (S.fromList ["a", "b", "c"]) <*> getMulti (S.fromList ["c", "d"])
+{% endsyntax %}
+
+{% syntax haskell %}
+λ: interpret program2 $ M.fromList $ map (\k -> (k,k)) ["a", "b", "c", "d"]
+looking up fromList ["a ","b ","c","d"]
+fromList [("c","c")]
+{% endsyntax %}
+
+{% syntax haskell %}
+> program3 :: Store (Map String String)
+> program3 = union <$> getMulti (S.fromList ["a", "b", "c"]) <*> getMulti (S.fromList ["c", "d"])
+{% endsyntax %}
+
+{% syntax haskell %}
+λ: interpret program3 $ M.fromList $ map (\k -> (k,k)) ["a", "b", "c", "d"]
+looking up fromList ["a","b","c","d"]
+fromList [("a","a"),("b","b"),("c","c"),("d","d")]
+{% endsyntax %}
+
+We can still express dependence upon previous values using
+(>>=), and prevent batching:
+
+{% syntax haskell %}
+> program4 :: Store (Maybe String)
+> program4 = get "key" >>= (maybe (return Nothing) get)
+{% endsyntax %}
+
+{% syntax haskell %}
+λ: interpret program4 $ M.fromList $ [("key", "second-key"), ("second-key", "hello!")]
+looking up "key"
+looking up "second-key"
+Just "hello!"
+{% endsyntax %}
+
+A final example of code that I often see in real world applications,
+for an example User model
+
+{% syntax haskell %}
+> data User = User {
+>   _id :: Int,
+>   username :: String,
+>   email :: String
+>   } deriving (Show)
+{% endsyntax %}
+
+Let's say we store all of this in our store, with a scheme of
+`<id>:name` and `<id>:email` for the user data.
+
+To lookup a single record we would could use `<*>` and batching of
+Gets would occur:
+
+{% syntax haskell %}
+> lookupUser :: Int -> Store (Maybe User)
+> lookupUser i = liftA2 (User i) <$> get (pre ++ ":name") <*> get (pre ++ ":email")
+>   where pre = show i
+{% endsyntax %}
+
+{% syntax haskell %}
+λ: interpret (lookupUser 0) $ M.fromList $ [("0:email", "test@example.com"), ("0:name", "testuser")]
+looking up fromList ["0:email","0:name"]
+Just (User {_id = 0, username = "testuser", email = "test@example.com"})
+{% endsyntax %}
+
+We can expand this to looking up multiple users with
+[`traverse`](http://hackage.haskell.org/package/base-4.7.0.0/docs/Data-Traversable.html#v:traverse),
+and all of the Gets will be collapsed:
+
+{% syntax haskell %}
+> lookupUsers :: [Int] -> Store [Maybe User]
+> lookupUsers ids = traverse lookupUser ids
+{% endsyntax %}
+
+{% syntax haskell %}
+λ: let sampleUser k = [(k ++ ":email", "test" ++ k ++ "@example.com"), (k ++ ":name", "testuser" ++ k)]
+λ: let db = M.fromList $ [0..4] >>= sampleUser . show
+λ: interpret (lookupUsers [1..4]) db
+looking up fromList ["1:email","1:name","2:email","2:name","3:email","3:name","4:email","4:name"]
+[Just (User {_id = 1, username = "testuser1", email = "test1@example.com"}),Just (User {_id = 2, username = "testuser2", email = "test2@example.com"}),Just (User {_id = 3, username = "testuser3", email = "test3@example.com"}),Just (User {_id = 4, username = "testuser4", email = "test4@example.com"})]
+{% endsyntax %}
+
+This collapsing works very naturally with (>>=). Let's say we verify
+emails, and for some reason, store this some result under a key like
+`<email>:verified`. If we have a user, we can look this up like so:
+
+{% syntax haskell %}
+> verified :: User -> Store Bool
+> verified (User _ _ e) = (get $ e ++ ":verified") >>= return . isJust
+{% endsyntax %}
+
+If we just have an id, we'll need to look up the user first:
+
+{% syntax haskell %}
+> idVerified :: Int -> Store Bool
+> idVerified i = lookupUser i >>= (maybe (return False) verified)
+{% endsyntax %}
+
+With valid user, we have two Gets.
+
+{% syntax haskell %}
+λ: interpret (idVerified 1) (M.insert "test1@example.com:verified" "verified" db)
+looking up fromList ["1:email","1:name"]
+looking up "test1@example.com:verified"
+True
+{% endsyntax %}
+
+With an invalid user, we do just one:
+
+{% syntax haskell %}
+λ: interpret (idVerified 5) (M.insert "test1@example.com:verified" "verified" db)
+looking up fromList ["5:email","5:name"]
+False
+{% endsyntax %}
+
+Once again, we can handle lists via `traverse`:
+
+{% syntax haskell %}
+> idsVerified :: [Int] -> Store [Bool]
+> idsVerified ids = traverse idVerified ids
+{% endsyntax %}
+
+Running this we see that Get requests are batched whenever they can,
+and that we don't need to write specific logic for batching multiple
+requests versus a single request.
+
+{% syntax haskell %}
+λ: interpret (idsVerified [1..5]) (M.insert "test1@example.com:verified" "verified" db)
+looking up fromList ["1:email","1:name","2:email","2:name","3:email","3:name","4:email","4:name","5:email","5:name"]
+looking up fromList ["test1@example.com:verified","test2@example.com:verified","test3@example.com:verified","test4@example.com:verified"]
+[True,False,False,False,False]
+{% endsyntax %}
+
+
+Thoughts
+--------
+
+I think this technique is pretty awesome, because it solves common
+issues like the "n+1 problem", without changing the original code,
+assuming it used `<*>` in the first place.
+
+There's a lot of related work around this:
+
+ * [Oliver Charles has similar motiviations with different implementation](http://ocharles.org.uk/blog/posts/2014-03-24-queries-in-loops-without-a-care-in-the-world.html)
+ * [John Wiegley has a simliar implementation](https://github.com/jwiegley/notes/blob/master/Query.hs)
+ * [Facebook's Haxl Project goes into more depth on this approach](http://www.cs.ox.ac.uk/ralf.hinze/WG2.8/31/slides/simon.pdf)
+
+[Kvle](https://twitter.com/nbspnbsp) pointed out that this may break
+some existing code that relied on sequencing of effects, for example:
+
+{% syntax haskell %}
+λ: interpret (get "a" *> put "b" "goodbye" *> get "b") (M.singleton "b" "hello")
+looking up fromList ["a","b"]
+putting b goodbye
+Just "hello"
+{% endsyntax %}
+
+I'm not really sure how these changes to the definition of Applicative
+affects whether the laws still hold. Related to this, embedding
+logic into the Applicative definition isn't the best. I'm looking into
+using [free applicative](http://hackage.haskell.org/package/free-4.7.1/docs/Control-Applicative-Free.html)
+instead, and moving the optimizations to another function, but I haven't
+figured out how to combine this with the nice `do` syntax.
+
+{% endmarkdown %}
+{% endarticle %}
+
+{% endblock %}
