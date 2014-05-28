@@ -219,10 +219,22 @@ instances for that we want to collapes:
 >   pure = Pure
 >   Pure a <*> Pure b = Pure $ a b
 >   Pure f <*> Free mb = Free $ fmap f <$> mb
->   Free (Get i next) <*> Free (Get i' next') = combineGet (S.fromList [i, i']) (toMap i next) (toMap i' next')
->   Free (Get i next) <*> Free (GetMulti is' next') = combineGet (S.insert i is') (toMap i next) (justKeys is' next')
->   Free (GetMulti is next) <*> Free (Get i' next') = combineGet (S.insert i' is) (justKeys is next) (toMap i' next')
->   Free (GetMulti is next) <*> Free (GetMulti is' next') = combineGet (is' <>  is) (justKeys is next) (justKeys is' next')
+>   Free (Get i n) <*> Free (Get i' n') = combineGet s m m'
+>     where s = (S.fromList [i, i'])
+>           m = (toMap i n)
+>           m' = (toMap i' n')
+>   Free (Get i n) <*> Free (GetMulti is' n') = combineGet s m m'
+>     where s = (S.insert i is')
+>           m = (toMap i n)
+>           m' = (justKeys is' n')
+>   Free (GetMulti is n) <*> Free (Get i' n') = combineGet s m m'
+>     where s = (S.insert i' is)
+>           m = (justKeys is n)
+>           m' = (toMap i' n')
+>   Free (GetMulti is n) <*> Free (GetMulti is' n') = combineGet s m m'
+>     where s = (is' <>  is)
+>           m = (justKeys is n)
+>           m' = (justKeys is' n')
 >   Free ma <*> b = Free $ (<*> b) <$> ma
 {% endsyntax %}
 
@@ -243,7 +255,9 @@ an appropriate Map:
 
 {% syntax haskell %}
 > program2 :: Store (Map String String)
-> program2 = intersection <$> getMulti (S.fromList ["a", "b", "c"]) <*> getMulti (S.fromList ["c", "d"])
+> program2 = intersection
+>            <$> getMulti (S.fromList ["a", "b", "c"])
+>            <*> getMulti (S.fromList ["c", "d"])
 {% endsyntax %}
 
 {% syntax haskell %}
@@ -254,7 +268,9 @@ fromList [("c","c")]
 
 {% syntax haskell %}
 > program3 :: Store (Map String String)
-> program3 = union <$> getMulti (S.fromList ["a", "b", "c"]) <*> getMulti (S.fromList ["c", "d"])
+> program3 = union
+>            <$> getMulti (S.fromList ["a", "b", "c"])
+>            <*> getMulti (S.fromList ["c", "d"])
 {% endsyntax %}
 
 {% syntax haskell %}
@@ -272,7 +288,7 @@ We can still express dependence upon previous values using
 {% endsyntax %}
 
 {% syntax haskell %}
-λ: interpret program4 $ M.fromList $ [("key", "second-key"), ("second-key", "hello!")]
+λ: interpret program4 $ M.fromList [("key", "second-key"), ("second-key", "hello!")]
 looking up "key"
 looking up "second-key"
 Just "hello!"
