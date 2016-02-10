@@ -1,0 +1,36 @@
+{% extends "_post.html" %}
+{% load webdesign %}
+{% load aym %}
+{% load verbatim %}
+
+{% hyde
+    title: Looking for Work
+    created: 2016-02-10 14:16:30
+%}
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+I'm available for work starting in late February, preferably remote,
+or in Austin.
+
+I'm happiest working on backend systems, primarily in Haskell. Some
+things I've done include performance & resilience engineering,
+collecting and processing metrics, and designing HTTP APIs.
+
+I prefer team cultures that are inclusive and collaborative, and
+emphasize quality engineering.
+
+Some recent work in Haskell I've done is [hdr-histogram][2]. More
+specific work history is availabe in my [resume][1].
+
+ [1]: http://joshbohde.com/resume.pdf
+ [2]: https://github.com/joshbohde/hdr-histogram
+
+
+{% endmarkdown %}
+{% endarticle %}
+
+{% endblock %}
