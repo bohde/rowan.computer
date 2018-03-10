@@ -1,0 +1,72 @@
+{% extends "_post.html" %}
+{% load webdesign %}
+{% load aym %}
+
+{%hyde
+    title: Cool Things About Go From A Haskell Perspective
+    created: 2018-03-08 11:29:35
+%}
+
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+Go gets a pretty bad reputation among Haskell programmers, and it's
+really not fair. I've been using both of them for several years now,
+and am in the pretty unique position of working on a Go compiler in
+Haskell.
+
+Go has a lot of really nice features and tooling that make my day to day life developing it really great. Here are a some of them:
+
+### Compile times
+
+They are pretty fast, so much so that I'm more likely to recompile in Go than in Haskell when developing.
+
+### Static linking
+
+I (almost) never need to worry about `LD_LIBRARY_PATH` (which is not a huge problem in Haskell), or operating system dependencies. 
+
+### Cross compilation
+
+I use Linux. If I need a coworker to test on their Mac, it's trivial to build and send a binary. This is made way easier by static linking, since I don't need to worry about their library setup.
+
+### `gofmt`
+
+Use [gofmt](https://golang.org/cmd/gofmt/) and your team will never have a review comment asking for formatting changes. It's fast enough to be run on save without any noticeable latency, which I cannot say for any Haskell formatters.
+
+### `goimports`
+
+Go's imports are qualified by default. Because of this, you can setup [goimports](https://godoc.org/golang.org/x/tools/cmd/goimports), and never think about your import lines again.
+
+### `go test`
+
+Having a default test runner inside the compiler means adding tests is way easier in Go. Combined with the test file convention (files ending in `_test.go` will only be built during test), makes adding tests to a package way less friction. 
+
+As a bonus, the test framework includes a benchmark runner. 
+
+### `quick`
+
+The standard library comes with a small property testing framework, [quick](https://golang.org/pkg/testing/quick/). It's not as fancy as quickcheck, but it can still catch bugs. If you want a proper property testing framework, use [gopter](https://github.com/leanovate/gopter). 
+
+### Build tags
+
+[Build tags](https://golang.org/pkg/go/build/#hdr-Build_Constraints) let files be conditionally compiled. This lets us avoid C preprocessor hacks. 
+
+This is how the test runner knows what files are considered to be parts of tests: the `_test.go` suffix signals the file should be built during test. 
+
+### Package structure
+
+All the Go files in a given directory are considered part of a package. There also is not a distinction between modules and packages, like in Haskell. Combined with build tags, this lets us avoid a lot of extra modules for test or certain build conditions. It also cleanly decouples the file size from the module size, as there's no need to make a new module if the file is getting too large. 
+
+As a result, managing namespaces is a whole lot less fussy in Go than other languages. If I want to test a single module, the test runner can do that, while only compiling the files I need.
+
+### tools
+
+A whole lot of [compiler internals](https://godoc.org/golang.org/x/tools) are just exposed as libraries and binaries. This makes tooling like `gofmt` and `goimports` easier to write. 
+
+{% endmarkdown %}
+{% endarticle %}
+
+{% endblock %}
