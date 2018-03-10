@@ -1,0 +1,39 @@
+- name: Setup joshbohde.com
+  hosts: localhost
+  become: False
+  gather_facts: False
+  tasks:
+
+    # This may fail because of a bug in aws: https://github.com/boto/boto/issues/2836
+    # If this fails add the following to you ~/.boto
+
+    # [s3]
+    # calling_format = boto.s3.connection.OrdinaryCallingFormat
+
+    - name: "make {{ item }} bucket"
+      s3_bucket:
+        name: "{{ item }}"
+        policy: |
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "AddPerm",
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::{{ item }}/*"
+              }
+            ]
+          }
+      with_items:
+        - joshbohde.com
+
+    - name: "setup {{ item }} as a website"
+      s3_website:
+        name: "{{ item }}"
+        suffix: index.html
+        error_key: errors/404.htm
+        state: present
+      with_items:
+        - joshbohde.com

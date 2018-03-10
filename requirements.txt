@@ -7,7 +7,7 @@ PyYAML==3.10
 Pygments==1.5
 argparse==1.2.1
 async==0.6.1
-cssmin==0.1.4
+cssmin==0.2.0
 django-gitrevision==0.1.4
 gitdb==0.5.4
 https://github.com/joshbohde/hyde/tarball/master
