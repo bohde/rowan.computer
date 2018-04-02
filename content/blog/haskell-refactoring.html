@@ -1,0 +1,193 @@
+{% extends "_post.html" %}
+{% load webdesign %}
+{% load aym %}
+
+{%hyde
+    title: Haskell Refactoring
+    created: 2018-04-02 18:06:35
+%}
+
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+When we write Haskell, we love to talk about the correctness of our
+code. The focus on using [equational reasoning](http://www.haskellforall.com/2013/12/equational-reasoning.html) let's us reason about our code. This is amazing thing to have in our toolbox when we have a piece of code we want to analyze, but what about when we want to change some piece of code?
+
+_Refactoring_ is the process of changing code such that the new code is _functionally equivalent_ to the old code. If we're to step back, and model this as Haskell, we'd get the following:
+
+{% syntax haskell %}
+
+data Program = Program
+
+run :: Program -> Input -> Output
+
+type Refactoring = (Program -> Program)
+
+-- A given Refactoring r must satisfy the following property
+-- run program input ≡ run (r program) input
+
+
+{% endsyntax %}
+
+When we talk about refactoring, we often use it loosely to mean "changing a program". If we tighten up our language, and only discuss changes with that property, we get a lot of cool things. If we satisfy that property, we know that we did not accidently introduce a bug (or accidently fix a bug!). This means it's always safe to apply a refactoring.
+
+Refactorings also compose:
+
+{% syntax haskell %}
+
+a :: Refactoring
+b :: Refactoring
+
+c :: Refactoring
+c program = b (a program)
+-- equivalent to
+-- c = b . a
+
+-- We still satisy the property
+-- run program input ≡ run (a program) input ≡ run (b (a program)) input
+
+{% endsyntax %}
+
+This is a big one: if we can define the design we want via a set of refactorings from the design we have, we know we haven't changed any functionality.
+
+Almost all of the [refactoring catalog](https://refactoring.com/catalog/) apply to Haskell with some slight modifications (e.g. use function instead of methods and typeclasses instead of interfaces). Where Haskell really shines is that every equivalence we have is also a valid refactoring.
+
+As an example, taking the following from the [`Control.Lens.View`](https://hackage.haskell.org/package/lens-4.16.1/docs/Control-Lens-Getter.html#v:view) documentation: `view . to ≡ id`
+
+We can use this to refactor from bare records accessors to a lens based API.
+
+{% syntax haskell %}
+
+data Company { name :: Name }
+
+data User { company :: Company }
+
+companyName :: User -> Name
+companyName = name . company
+
+-- id x ≡ x
+
+companyName :: User -> Name
+companyName = (id name) . company
+
+-- view . to ≡ id
+
+companyName :: User -> Name
+companyName = ((view . to) name) . company
+
+-- (f (g a)) = (f . g) a
+
+companyName :: User -> Name
+companyName = (view (to name)) . company
+
+-- extract function
+
+companyName :: User -> Name
+companyName = (view nameGetter) . company
+  where
+    nameGetter = to name
+
+-- id x ≡ x
+
+companyName :: User -> Name
+companyName = (view nameGetter) . (id company)
+  where
+    nameGetter = to name
+
+-- view . to ≡ id
+
+companyName :: User -> Name
+companyName = (view nameGetter) . ((view . to) company)
+  where
+    nameGetter = to name
+
+-- (f (g a)) = (f . g) a
+
+companyName :: User -> Name
+companyName = (view nameGetter) . (view (to company))
+  where
+    nameGetter = to name
+
+-- extract function
+
+companyName :: User -> Name
+companyName = (view nameGetter) . (view companyGetter)
+  where
+    nameGetter = to name
+    companyGetter = to company
+
+-- unsure where this would be, but maybe follows from:
+-- https://hackage.haskell.org/package/lens-4.16.1/docs/Control-Lens-Getter.html#v:to
+-- (view f) . (view g) = view (g . f)
+
+companyName :: User -> Name
+companyName = view (companyGetter . nameGetter)
+  where
+    nameGetter = to name
+    companyGetter = to company
+
+-- since we're just using a Getting here
+-- we can abstract out to a Lens
+
+companyName :: User -> Name
+companyName = view (companyGetter . nameGetter)
+  where
+    nameGetter = lens name (\c n -> c{name=n})
+    companyGetter = to company
+
+-- since `nameGetter` is no longer a `Getter`
+-- rename function
+
+companyName :: User -> Name
+companyName = view (companyGetter . nameLens)
+  where
+    nameLens = lens name (\c n -> c{name=n})
+    companyGetter = to company
+
+-- we'll abstract out companyGetter to a Lens as well
+
+companyName :: User -> Name
+companyName = view (companyGetter . nameLens)
+  where
+    nameLens = lens name (\c n -> c{name=n})
+    companyGetter = lens company (\u c -> u{company=c})
+
+-- rename function
+companyName :: User -> Name
+companyName = view (companyLens . nameLens)
+  where
+    nameLens = lens name (\c n -> c{name=n})
+    companyLens = lens company (\u c -> u{company=c})
+
+{% endsyntax %}
+
+That was a lot of work for a relatively small change, but since each change was a refactor, we know that we didn't break anything. We also picked up on some higher level refactoring. For instance:
+
+{% syntax haskell %}
+
+-- Add lens for a record field `name`
+nameLens = lens name (\r a -> r{name=a})
+
+-- Any use of the record field `name` can be changed to use the `nameLens`
+name ≡ view nameLens
+r { name = v } ≡ set nameLens v r
+
+-- We can rename field `name` to `_name`
+nameLens = lens _name (\r a -> r{_name=a})
+
+-- And then rename function `nameLens` to `name`
+name = lens _name (\r a -> r{_name=a})
+
+{% endsyntax %}
+
+These four grouping provide a high level refactoring, allowing us to take any field of a record, and replace all instances of it with a Lens.
+
+
+{% endmarkdown %}
+{% endarticle %}
+
+
+{% endblock %}
