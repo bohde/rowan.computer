@@ -7,7 +7,6 @@
     created: 2018-04-02 18:06:35
 %}
 
-
 {% block article %}
 
 {% article %}
@@ -16,7 +15,7 @@
 When we write Haskell, we love to talk about the correctness of our
 code. The focus on using [equational reasoning](http://www.haskellforall.com/2013/12/equational-reasoning.html) let's us reason about our code. This is amazing thing to have in our toolbox when we have a piece of code we want to analyze, but what about when we want to change some piece of code?
 
-_Refactoring_ is the process of changing code such that the new code is _functionally equivalent_ to the old code. If we're to step back, and model this as Haskell, we'd get the following:
+We often use the term _refactoring_, to loosely mean "changing a program", but it's original definition requires that the new code is _functionally equivalent_ to the old code. If we were model this in Haskell, we'd get the following:
 
 {% syntax haskell %}
 
@@ -29,10 +28,9 @@ type Refactoring = (Program -> Program)
 -- A given Refactoring r must satisfy the following property
 -- run program input ≡ run (r program) input
 
-
 {% endsyntax %}
 
-When we talk about refactoring, we often use it loosely to mean "changing a program". If we tighten up our language, and only discuss changes with that property, we get a lot of cool things. If we satisfy that property, we know that we did not accidently introduce a bug (or accidently fix a bug!). This means it's always safe to apply a refactoring.
+If we require our refactorings to have this property, we know that we did not accidently introduce a bug (or accidently fix a bug!) whenever we apply it. This means it's always safe to apply a refactoring, and we don't need to think about the correctness of it, only how it impacts the design.
 
 Refactorings also compose:
 
@@ -51,140 +49,140 @@ c program = b (a program)
 
 {% endsyntax %}
 
-This is a big one: if we can define the design we want via a set of refactorings from the design we have, we know we haven't changed any functionality.
+Because of this, we know we can apply any number of refactorings to our program, and we'll never change the correctness of it. Feasibly, if we could make huge changes to our program safely by defining a set of refactorings to get us what we wanted.
 
-Almost all of the [refactoring catalog](https://refactoring.com/catalog/) apply to Haskell with some slight modifications (e.g. use function instead of methods and typeclasses instead of interfaces). Where Haskell really shines is that every equivalence we have is also a valid refactoring.
+## Types of Refactorings
 
-As an example, taking the following from the [`Control.Lens.View`](https://hackage.haskell.org/package/lens-4.16.1/docs/Control-Lens-Getter.html#v:view) documentation: `view . to ≡ id`
+Much of the refactorings defined has been done in languages like Java or Ruby, but they really aren't language specific. Almost all of the [refactoring catalog](https://refactoring.com/catalog/) apply to Haskell with some slight modifications (e.g. use function instead of methods and typeclasses instead of interfaces).
 
-We can use this to refactor from bare records accessors to a lens based API.
+What makes Haskell really interesting from a refactoring standpoint, is that every equivalence we have is also a valid refactoring. For instance, in the documentation for [`id`](http://hackage.haskell.org/package/base-4.11.0.0/docs/Prelude.html#v:id), there's the following line:
 
 {% syntax haskell %}
+id x = x
+{% endsyntax %}
 
-data Company { name :: Name }
+This is the definition for `id`, but also an equivalence. I know that whenever I see `id x` I can replace it with `x` . I also know that for any arbitrary expression `x`, I can replace it with `id x` and it will work.
 
-data User { company :: Company }
+Various libraries will define these, and they are useful to have when refactoring.
 
-companyName :: User -> Name
-companyName = name . company
+## An Example
 
--- id x ≡ x
+Let's consider a small module that we want to refactor to use `lens`.
 
-companyName :: User -> Name
-companyName = (id name) . company
+{% syntax haskell %}
+module User (
+  User(..), hasValidEmail
+) where
 
--- view . to ≡ id
+import qualified Email
 
-companyName :: User -> Name
-companyName = ((view . to) name) . company
+data User { email :: Email.Email }
 
--- (f (g a)) = (f . g) a
-
-companyName :: User -> Name
-companyName = (view (to name)) . company
-
--- extract function
-
-companyName :: User -> Name
-companyName = (view nameGetter) . company
-  where
-    nameGetter = to name
-
--- id x ≡ x
-
-companyName :: User -> Name
-companyName = (view nameGetter) . (id company)
-  where
-    nameGetter = to name
-
--- view . to ≡ id
-
-companyName :: User -> Name
-companyName = (view nameGetter) . ((view . to) company)
-  where
-    nameGetter = to name
-
--- (f (g a)) = (f . g) a
-
-companyName :: User -> Name
-companyName = (view nameGetter) . (view (to company))
-  where
-    nameGetter = to name
-
--- extract function
-
-companyName :: User -> Name
-companyName = (view nameGetter) . (view companyGetter)
-  where
-    nameGetter = to name
-    companyGetter = to company
-
--- unsure where this would be, but maybe follows from:
--- https://hackage.haskell.org/package/lens-4.16.1/docs/Control-Lens-Getter.html#v:to
--- (view f) . (view g) = view (g . f)
-
-companyName :: User -> Name
-companyName = view (companyGetter . nameGetter)
-  where
-    nameGetter = to name
-    companyGetter = to company
-
--- since we're just using a Getting here
--- we can abstract out to a Lens
-
-companyName :: User -> Name
-companyName = view (companyGetter . nameGetter)
-  where
-    nameGetter = lens name (\c n -> c{name=n})
-    companyGetter = to company
-
--- since `nameGetter` is no longer a `Getter`
--- rename function
-
-companyName :: User -> Name
-companyName = view (companyGetter . nameLens)
-  where
-    nameLens = lens name (\c n -> c{name=n})
-    companyGetter = to company
-
--- we'll abstract out companyGetter to a Lens as well
-
-companyName :: User -> Name
-companyName = view (companyGetter . nameLens)
-  where
-    nameLens = lens name (\c n -> c{name=n})
-    companyGetter = lens company (\u c -> u{company=c})
-
--- rename function
-companyName :: User -> Name
-companyName = view (companyLens . nameLens)
-  where
-    nameLens = lens name (\c n -> c{name=n})
-    companyLens = lens company (\u c -> u{company=c})
+hasValidEmail :: User -> Bool
+hasValidEmail = Email.isValid . email
 
 {% endsyntax %}
 
-That was a lot of work for a relatively small change, but since each change was a refactor, we know that we didn't break anything. We also picked up on some higher level refactoring. For instance:
+`lens` is documents a lot of the properties in the comments of the function. For example, [`view`](https://hackage.haskell.org/package/lens-4.16.1/docs/Control-Lens-Getter.html#v:view) defines the equivalence `view . to = id`
+
+Let's use this to refactor `hasValidEmail` to use `lens`:
 
 {% syntax haskell %}
 
--- Add lens for a record field `name`
-nameLens = lens name (\r a -> r{name=a})
+-- id x = x
 
--- Any use of the record field `name` can be changed to use the `nameLens`
-name ≡ view nameLens
-r { name = v } ≡ set nameLens v r
+hasValidEmail :: User -> Bool
+hasValidEmail = Email.isValid . (id email)
 
--- We can rename field `name` to `_name`
-nameLens = lens _name (\r a -> r{_name=a})
+-- view . to = id
 
--- And then rename function `nameLens` to `name`
-name = lens _name (\r a -> r{_name=a})
+hasValidEmail :: User -> Bool
+hasValidEmail = Email.isValid . ((view . to) email)
+
+-- (f (g a)) = (f . g) a
+
+hasValidEmail :: User -> Bool
+hasValidEmail = Email.isValid . (view (to email))
+
+-- Extract Function
+
+hasValidEmail :: User -> Bool
+hasValidEmail = Email.isValid . (view emailGetter)
+  where
+    emailGetter = to email
+
+-- `view` only requires a `Getting`, so we can
+-- use a `Lens` instead of a `Getter`
+-- https://hackage.haskell.org/package/lens-4.16.1/docs/Control-Lens-Getter.html#t:Getting
+
+hasValidEmail :: User -> Bool
+hasValidEmail = Email.isValid . (view emailGetter)
+  where
+    emailGetter = lens email (\u e -> u{email=e})
+
+-- since `emailGetter` is no longer a `Getter`, rename it
+-- Rename Function
+
+hasValidEmail :: User -> Bool
+hasValidEmail = Email.isValid . (view emailLens)
+  where
+    emailLens = lens email (\u e -> u{email=e})
 
 {% endsyntax %}
 
-These four grouping provide a high level refactoring, allowing us to take any field of a record, and replace all instances of it with a Lens.
+That was a lot of work for a relatively small change! But, since each change was just applying a refactoring, we know that we never broke the code.
 
+## Combining Refactorings
+
+Doing that every time is really tedious, but we don't need to work at the level every time. Once we have a higher level refactoring combining multiple steps, we can use that as a refactoring itself.
+
+If we wanted to make our entire program use `lens`, here are the 5 steps we'd need to do:
+
+1\. Add lens for a record field `email`
+
+{% syntax haskell %}
+
+emailLens = lens email (\r a -> r{email=a})
+
+{% endsyntax %}
+
+2\. Change every use of the `email` field as a function to use the lens
+
+{% syntax haskell %}
+
+email = view emailLens
+
+{% endsyntax %}
+
+3\. Change every use of the `email` field to assign to use the lens
+
+{% syntax haskell %}
+
+r { email = v } = set emailLens v r
+
+{% endsyntax %}
+
+4\. At this point, there should be a single consumer of the record field: the lens. We can rename it to `_email`
+
+{% syntax haskell %}
+
+emailLens = lens _email (\r a -> r{_email=a})
+
+{% endsyntax %}
+
+5\. With the `email` identifier no longer in use, we can rename our lens.
+
+{% syntax haskell %}
+
+email = lens _email (\r a -> r{_email=a})
+
+{% endsyntax %}
+
+With that, our code is as if we designed it as a lens from the beginning, and we have a high level process to do this in other places.
+
+## More Reading
+
+The [Refactoring book](https://martinfowler.com/books/refactoring.html) is good, and is applicable to Haskell development even if the examples aren't in Haskell. Neil Mitchell has a [good example on doing this for a function](http://neilmitchell.blogspot.com/2015/02/refactoring-with-equational-reasoning.html).
 
 {% endmarkdown %}
 {% endarticle %}
