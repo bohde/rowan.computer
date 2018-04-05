@@ -1,0 +1,53 @@
+{% extends "_post.html" %}
+{% load webdesign %}
+{% load aym %}
+
+{%hyde
+    title: Pattern Matching on Records in Haskell
+    created: 2018-04-05 2:51:58
+%}
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+If you've ever written a function that pattern matches on a record,
+and then added a field to that record, you've seen a message like the following:
+
+{% syntax %}
+• The constructor ‘User’ should have 4 arguments, but has been given 3
+• In the pattern: User name _ (Just favoriteFood)
+  In an equation for ‘greet’:
+      greet (User name _ (Just favoriteFood))
+        = "Hey, "
+          ++ show name ++ "! Have some " ++ show favoriteFood ++ "!"
+{% endsyntax %}
+
+Dealing with this just busy work: every function that pattern matches on our changed record, we need to add yet another `'_'` to. We can avoid this by just using record syntax in our pattern matching:
+
+{% syntax haskell %}
+greet :: User -> String
+greet User{name=name, favoriteFood=Just food} = "Hey, " ++ show name
+                                              ++ "! Have some " ++ show food ++ "!"
+greet User{name=name}                         = "Hello, " ++ show name ++ "."
+{% endsyntax %}
+
+Now, whenever we add or delete a field we're not using in `greet`, our code will still compile.
+
+If we want to go ever further, we can use [Record Puns](https://downloads.haskell.org/~ghc/8.2.2/docs/html/users_guide/glasgow_exts.html#record-puns) by enabling the `NamedFieldPuns` extension. This lets us remove the `name=name` part, making our function look like this:
+
+{% syntax haskell %}
+greet :: User -> String
+greet User{name, favoriteFood=Just food} = "Hey, " ++ show name
+                                         ++ "! Have some " ++ show food ++ "!"
+greet User{name}                         = "Hello, " ++ show name ++ "."
+{% endsyntax %}
+
+By doing this by default, we can eliminate a source of boring work and focus on more interesting things.
+
+{% endmarkdown %}
+{% endarticle %}
+
+
+{% endblock %}
