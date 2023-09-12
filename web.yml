@@ -1,4 +1,4 @@
-- name: Setup joshbohde.com
+- name: Setup rowan.computer
   hosts: localhost
   become: False
   gather_facts: False
@@ -27,7 +27,7 @@
             ]
           }
       with_items:
-        - joshbohde.com
+        - rowan.computer
 
     - name: "setup {{ item }} as a website"
       s3_website:
@@ -36,4 +36,4 @@
         error_key: errors/404.htm
         state: present
       with_items:
-        - joshbohde.com
+        - rowan.computer

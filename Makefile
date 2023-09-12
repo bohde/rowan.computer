@@ -6,4 +6,4 @@ build:
 
 
 deploy:
-	aws s3 sync --delete deploy s3://joshbohde.com
+	aws s3 sync --delete deploy s3://rowan.computer

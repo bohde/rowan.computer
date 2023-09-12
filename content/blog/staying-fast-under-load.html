@@ -58,7 +58,7 @@ CoDel is referenced in [Chapter 22 of the SRE
 book](https://landing.google.com/sre/sre-book/chapters/addressing-cascading-failures/#xref_cascading-failure_load-shed-graceful-degredation)
 in the section on load shedding, but I couldn't find an implementation
 of it for Go. It's useful for a some applications, so I wrote an open
-source version called [codel](https://github.com/joshbohde/codel/). It's
+source version called [codel](https://github.com/bohde/codel/). It's
 designed to be easily dropped in to your existing HTTP handlers or
 client libaries.
 
@@ -66,7 +66,7 @@ client libaries.
 
 import (
     "context"
-    "github.com/joshbohde/codel"
+    "github.com/bohde/codel"
 )
 
 c := codel.New(codel.Options{

@@ -24,7 +24,7 @@ I looked into a few prepackaged options, such as [GitLab][3] or [Gitorious][4],
 but settled on a combination of [gitolite][5], [gitweb][6], and [git-daemon][7].
 
 Throughout all the following examples, I'll be using
-`git.joshbohde.com` as my server, but you should change that to your
+`git.rowan.computer` as my server, but you should change that to your
 own server.
 
 
@@ -39,7 +39,7 @@ repos][9]. This let me create new repos by just setting the origin,
 and pushing.
 
 After this is setup, you can run commands to interact with your
-repositories through ssh, e.g. `ssh git@git.joshbohde.com help` will
+repositories through ssh, e.g. `ssh git@git.rowan.computer help` will
 show all the commands.
 
 One thing that I spent a bit of time on was figuring out how to delete
@@ -56,7 +56,7 @@ I installed gitweb directly from apt. From there I added the following config op
     $projects_list = "/home/git/projects.list";
     $strict_export = "true";
     $export_ok = "git-daemon-export-ok";
-    @git_base_url_list = ('git://git.joshbohde.com');
+    @git_base_url_list = ('git://git.rowan.computer');
     $feature{'highlight'}{'default'} = [1];
 
 This will display any repo in gitweb that the gilolite user `gitweb` can read. You can add these permissions
@@ -102,18 +102,18 @@ for repo in json.loads(''.join(sys.stdin)):
 
 And used it to generate a list of all my repos.
 
-    curl "https://api.github.com/users/joshbohde/repos?type=owner" | python convert.py >> repos
+    curl "https://api.github.com/users/bohde/repos?type=owner" | python convert.py >> repos
 
 I had two pages of repos, so I had to do it again with the url
-`"https://api.github.com/users/joshbohde/repos?type=owner&page=2"`.
+`"https://api.github.com/users/bohde/repos?type=owner&page=2"`.
 
 I used the following script to clone a repo:
 
 {% syntax bash %}
 set -e
-git clone --bare https://github.com/joshbohde/$1.git
+git clone --bare https://github.com/bohde/$1.git
 cd $1.git
-git push --mirror ssh://git@git.joshbohde.com/joshbohde/$1.git
+git push --mirror ssh://git@git.rowan.computer/rowan/$1.git
 cd ..
 {% endsyntax %}
 
@@ -122,9 +122,9 @@ To clone them all, I ran `cd /tmp; cat repos | xargs -L 1 bash clone.sh`
 To setup descriptions, and public access, I wrote the following script:
 
 {% syntax bash %}
-ssh <your_git_host> desc joshbohde/$1 "$3"
-ssh <your_git_host> perms joshbohde/$1 + READERS daemon
-ssh <your_git_host> perms joshbohde/$1 + READERS gitweb
+ssh <your_git_host> desc rowan/$1 "$3"
+ssh <your_git_host> perms rowan/$1 + READERS daemon
+ssh <your_git_host> perms rowan/$1 + READERS gitweb
 {% endsyntax %}
 
 To run this over them all, I ran `cat repos | xargs -L 1 bash access.sh`
