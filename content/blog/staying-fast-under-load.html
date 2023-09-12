@@ -1,0 +1,139 @@
+{% extends "_post.html" %}
+{%load webdesign %}
+{% load aym %}
+
+{%hyde
+    title: Staying Fast Under Load
+    created: 2019-01-13 19:19:00
+%}
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+As systems approach their capacity, they experience higher
+latency. This is because they have queues scattered throughout, such
+as network buffers, in front of thread pools, or CPU instruction
+pipelines. These queues fill up under load, causing more and more wait
+time before processing, resulting in longer delays.
+
+## Load Shedding
+
+We can avoid issue of full queues by preemptively shedding load in
+response to latency getting too high. This can be a very effective
+technique, especially if the request is user initiated. After a
+certain point, the user might retry or leave, and there's no point in
+serving this request.
+
+One technique I've seen used is a [circuit
+breaker](https://martinfowler.com/bliki/CircuitBreaker.html). After a
+percentage of requests start to timeout, the circuit breaker opens,
+preventing new requests from being serviced. This allows for those
+requests to be drained, at which point the circuit breaker can close
+and resume normal service. This approach is simple and reliable, but
+does have a few downsides:
+
+1. No requests are serviced while the breaker is open.
+2. In prolonged adverse conditions, the breaker may repeatedly open and close.
+
+## Active Queue Management
+
+The problem of long queue delays happens in in networking, and is
+addressed by dropping a portion of packets before the queue is
+entirely full. This is called [active queue
+management](https://en.wikipedia.org/wiki/Active_queue_management) and
+allows successfully delivery of a large percentage of packets, while
+avoiding high latencies.
+
+One techniques for active queue management is [Controlled
+Delay](https://queue.acm.org/detail.cfm?id=2209336) or CoDel. It uses the
+minimum queue delay over a time window to determine if a queue is good
+or bad. When it's bad, it drops a single packet and shortens the time
+window for the next check. It's a simple control mechanism that can
+handle short bursts without dropping, and adapts to both increases and
+decreases in downstream throughput.
+
+CoDel is referenced in [Chapter 22 of the SRE
+book](https://landing.google.com/sre/sre-book/chapters/addressing-cascading-failures/#xref_cascading-failure_load-shed-graceful-degredation)
+in the section on load shedding, but I couldn't find an implementation
+of it for Go. It's useful for a some applications, so I wrote an open
+source version called [codel](https://github.com/joshbohde/codel/). It's
+designed to be easily dropped in to your existing HTTP handlers or
+client libaries.
+
+{% syntax go %}
+
+import (
+    "context"
+    "github.com/joshbohde/codel"
+)
+
+c := codel.New(codel.Options{
+    // The maximum number of pending acquires
+    MaxPending: 100,
+    // The maximum number of concurrent acquires
+    MaxOutstanding: 10,
+    // The target latency to wait for an acquire.
+    // Acquires that take longer than this can fail.
+    TargetLatency: 10 * time.Millisecond,
+})
+
+
+func ExampleHandler() {
+    // Attempt to acquire the lock, with a 100ms deadline
+    ctx, cancel := context.WithTimeout(context.Background(), 100 * time.Millisecond)
+    err := c.Acquire(ctx)
+    cancel()
+
+    // if err is not nil, acquisition failed.
+    if err != nil {
+        return
+    }
+
+    // If acquisition succeeded, we need to release it.
+    defer c.Release()
+
+    // Do some process with external resources
+}
+
+{% endsyntax %}
+
+## Performance
+
+I used a simulation of a single threaded server that can handle 1000
+requests per second to test the above configuration. For comparison,
+I've also tested a bounded FIFO queue with the same 100ms deadline.
+
+Here's the graph of 95th percentile of RTT latency compared to
+incoming requests per second. `codel` does not exhibit the sharp
+uptick in latency as the FIFO queue, because it starts to shed small
+amounts of load when the queue delay grows.
+
+![latency](/media/staying-fast-under-load/latency.png  "Graph of the 95th percentile latency")
+
+Here's the graph of throughput, demonstrating how `codel` throughput
+limits increase the closer it gets to capacity. It's also able to
+handle sustained overload periods by shedding load over capacity.
+
+![throughput](/media/staying-fast-under-load/throughput.png  "Graph of the throughput")
+
+## Try it out
+
+This technique is a good fit to test on either high volume but low value requests, or
+requests where failure can be handled in graceful manner, such as
+showing stale results.
+
+Before using `codel` in production, you'll want to determine at what
+percentage of capacity you want to start dropping a portion of
+requests. This is a function of the `TargetLatency` parameter, and the
+specific latency distributions of your application. If you already
+have target 95th percentile latency, that's probably a safe place to
+start.
+
+
+
+{% endmarkdown %}
+{% endarticle %}
+
+{% endblock %}

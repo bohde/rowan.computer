@@ -17,6 +17,10 @@
 
 @import "partials/pygments";
 
+header.page, nav.site {
+    margin-top: 1em;
+}
+
 header.page,
 nav.site {
   @include inline-block;
@@ -38,17 +42,16 @@ footer.page {
 }
 
 nav.site {
-  display: block;
-  @include float-right;
+  display: inline-block;
+  margin-left: 1em;
 
   a {
     @include inline-block;
     border: none;
-    background-color: #555;
-    color: #f8f8f8;
+    color: #555;
     font-size: 1.6154em;
     text-transform: lowercase;
-    padding: .25em 1em;
+    padding: .25em .5em;
     margin-bottom: .25em;
   }
 }
@@ -58,7 +61,7 @@ section.vcard {
 }
 
 article {
-  margin: 2.6154em 0;
+  margin: 1em 0;
   clear: both;
   font-size: 1em;
 
@@ -66,16 +69,22 @@ article {
     margin-bottom: 2.6154em;
   }
 
+  h1,h2,h3,h4 {
+    color: #555;
+    font-weight: bold;
+  }
+
   h1 {
-    font-size: 4.2308em;
+    font-size: 2.6154em;
     margin-right: .25em;
-    margin-bottom: .25em;
+    margin-bottom: .5em;
   }
 
   .meta {
     vertical-align: text-bottom;
     font-size: 1.6154em;
     line-height: .619em;
+    margin-top: 1em;
     color: #555;
   }
 
@@ -94,7 +103,7 @@ article {
     }
 
     td {
-      text-align: right;
+      text-align: left;
     }
 
     th {
@@ -114,9 +123,19 @@ article {
 }
 
 #post-content {
-    font-size: 1.25em;
+    h1,h2,h3,h4 {
+        margin-top: 1em;
+    }
+
+    p,li {
+        font-size: 1.6154em;
+    }
+
+    font-family: Georgia, serif;
 }
 
-code {
+
+
+precode {
    color: #333;
 }
