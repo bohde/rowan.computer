@@ -1,0 +1,68 @@
+{% extends "_post.html" %}
+{%load webdesign %}
+{% load aym %}
+
+{%hyde
+    title: Integrating a Broan Ventilator into Home Assistant
+    created: 2023-12-07 21:21:10
+%}
+
+{% block article %}
+
+{% article %}
+{% markdown %}
+
+
+My home has an energy recovery ventilator (ERV) as a part of its HVAC system in order to provide a source of filtered, fresh air without adding too much to heating and cooling loads. It's been beneficial and really makes the air feel less stagnant without opening a window.
+
+The provided controls for the ventilator only let you choose between the static configs of high, low, or high for 20 minutes per hour. However, the ventilation loads in my house are dynamic and sometimes need more or less runtime depending occupancy and other conditions. On top of this, since the ventilator uses the same ductwork as the air conditioner, running it in the summer actually causes household humidity to increase when the fresh air provided by the ventilator blows over the coils, causing the stored water to evaporate.
+
+Because of this, I wanted to better control when the ventilator ran, taking into account the state of the HVAC system and CO2 levels in the house. I have this data in  my home automation platform, [Home Assistant](https://www.home-assistant.io/), but the manufacturer of the ventilator doesn't provide any integration with Home Assistant, or official documentation on how to integrate it into a smart home system.
+
+My first attempt was to configure the ventilator to always run on high, and use the off-the-shelf smart plug to turn off the power to the ventilator when I didn't want it to run. However, the ventilator has an internal motorized damper that won't close when power is lost, so this method wouldn't work that well.
+
+My second attempt was to reverse engineer how the control panel worked and replicate that. The control panel is wired through a connector on the bottom of the ventilator, through the wires labeled Y, R, G & B. Through some testing with a multimeter, the Y provides 12V DC to power the control panel, B is ground, and G is the control. I'm unsure of what R does, but I didn't need it. When the control panel is set to high, it runs 12V over the G wire. When it's set to off, 0V is run over the G wire.
+
+![wiring terminal](/media/integrating-a-broan-ventilator-into-home-assistant/wiring.jpg  "Wiring terminal")
+
+I could emulate this setup with a relay that was configured to connect Y to G when the system wanted the ventilator to be on, and to disconnect them when the ventilator should be off. To do this, I used a [2 channel relay board](https://devices.esphome.io/devices/ESP-12F-Relay-X2). This device supported wifi, could integrate into HomeAssistant via [ESPHome](https://esphome.io/), and could be powered with 12V so that I didn't need an external power source. I needed to solder headers on the board to enable the serial programming interface. Once I did that, I was able to flash the example config using a serial adapter. Then I jumpered GPIO5 to RY1 to enable support of Relay 1 on the board. After that, I was able to power the device using my serial adapter, see it join the network, and control the relay via a switch in Home Assistant.
+
+Once I confirmed the board was controllable, I then disconnected the wiring from the ventilator to the control panel, and connected it to the relay board like so:
+
+{% endmarkdown %}
+<table>
+  <th>
+    <tr>
+      <td>Ventilator</td>
+      <td>Relay</td>
+    </tr>
+  </th>
+  <tr>
+    <td>Y</td>
+    <td>7-80V</td>
+  </tr>
+  <tr>
+    <td>B</td>
+    <td>GND</td>
+  </tr>
+  <tr>
+    <td>Y</td>
+    <td>COM1</td>
+  </tr>
+  <tr>
+    <td>G</td>
+    <td>NO1</td>
+  </tr>
+</table>
+{% markdown %}
+
+Once I reconnected the plug, the relay booted and joined the network. Toggling the previously configured switch in Home Assistant would now cause the ventilator to turn on and off. From here, I was able to setup a high-level fan object using the template in Home Assistant and build scheduling and trigger automations based upon the air conditioner state and CO2 levels in my house.
+
+![graph](/media/integrating-a-broan-ventilator-into-home-assistant/graph.jpg  "Graph showing the ventilator on and CO2 decreasing")
+
+Home Assistant has been controlling the ventilator using these automations for a couple of months now, and it's been very reliable, and managed to consistently keep CO2 levels in the house low while avoiding running when it doesn't need to.
+
+{% endmarkdown %}
+{% endarticle %}
+
+{% endblock %}
