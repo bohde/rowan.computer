@@ -34,17 +34,13 @@
   {% endblock %}
 
 {% if PRODUCTION %}
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YR21W4HCDG"></script>
 <script>
-(function(w){
-    w._gaq = [['_setAccount', 'UA-9518092-1'], ['_trackPageview'], ['_trackPageLoadTime']];
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
-    var load = function(url){
-        var el = document.createElement('script'); el.type = 'text/javascript'; el.async = true;
-        el.src = url;
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(el, s);
-    };
-    load(('https:'==document.location.protocol?'https://ssl':'http://www')+'.google-analytics.com/ga.js');
-})(window);
+  gtag('config', 'G-YR21W4HCDG');
 </script>
 {% endif %}
 </body>
